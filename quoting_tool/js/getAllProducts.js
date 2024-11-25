@@ -54,6 +54,10 @@ function searchBarHandler(){
     
     if(prev_search == search){ return;}
     
+    for(var i = table.rows.length - 1; i > 0; i--){
+        table.deleteRow(i);
+    }
+    
     parent.Xrm.WebApi.retrieveMultipleRecords("crmdqe_productsservices", "?$select=crmdqe_descriptionshort,crmd_unitid,crmd_purchaseunitcost,crmd_make,crmdqe_category1,crmdqe_category2,crmdqe_category3&$expand=crmd_unitid($select=crmd_name)&$filter=contains(crmdqe_descriptionshort,'" + search + "')").then(
     function success(result) {
         for(let i = 0; i < result.entities.length; i++){
