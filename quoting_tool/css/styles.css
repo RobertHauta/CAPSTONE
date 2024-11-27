@@ -11,13 +11,25 @@ body {
 body {
   font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
 }
+.valueDisplay{
+    display: inline-block;
+    width: fit-content;
+    height: fit-content;
+}
 
-h1{
+.columns{
+    display: block;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+h1,
+h2 {
     padding: 15px;
     display: inline-block;
 }
 
-input {
+#SearchBar {
     display: inlie-block;
     width: 50%;
     padding: .375rem .75rem;
@@ -36,13 +48,17 @@ input {
     transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
 }
 
+input{
+    width: 100px;
+}
+
 
 .btn-primary {
     color: #fff;
     background-color: #007bff;
     border-color: #007bff;
-    margin-left: 25%;
     font-size: 2rem;
+    float: right;
 }
 .btn-primary:active{
  background-color: #0050a6;
@@ -93,6 +109,7 @@ table {
 #QuoteTable{
 grid-template-columns: 
     minmax(100px, 2.5fr)
+    minmax(100px, 1fr)
     minmax(100px, 1fr)
     minmax(100px, 1fr)
     minmax(100px, 1fr)
