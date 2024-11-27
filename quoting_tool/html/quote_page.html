@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+     <h1>Quote Page</h1>
+     <button id="RefreshButton" type="button">Refresh</button>
+     <a href="./product_catalogue.html"><button class="btn btn-primary">Products</button></a>
+     
+     <h2>Labour Hours: x</h2>
+     <h2>Labour Cost: x</h2>
+     <h2>Material Cost: x</h2>
+     <h2>Total Estimate Price: x</h2>
+     
+     <div class="valueDisplay">
+         <h2 class="columns">Contingency %: <input type="number" placeholder="0"></h2>
+         <h2 class="columns">Overhead %: <input type="number" placeholder="0"></h2>
+         <h2 class="columns">Profit %: <input type="number" placeholder="0"></h2>
+     </div>
+
+     <div class="valueDisplay">
+        <h2 class="columns">Gross-Margin %: x</h2>
+        <h2 class="columns">Mark-up %: x</h2>
+     </div>
+     
+     <table id="QuoteTable">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Quantity</th>
+          <th>Unit</th>
+          <th>Material Cost</th>
+          <th>Material Total</th>
+          <th>Min/Unit</th>
+          <th>Labour Hours</th>
+          <th>Labour Total</th>
+          <th>Total Cost</th>
+          <th>Total Sell</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+     </table>
+    <script src="../js/quoting_manager.js" charset="utf-8"></script>
+</body>
+
+</html>
