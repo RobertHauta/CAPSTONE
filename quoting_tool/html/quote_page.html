@@ -9,7 +9,23 @@
 <body>
      <h1>Quote Page</h1>
      <button id="RefreshButton" type="button">Refresh</button>
-     <a href="./product_catalogue.html"><button>Products</button></a>
+     <a href="./product_catalogue.html"><button class="btn btn-primary">Products</button></a>
+     
+     <h2>Labour Hours: x</h2>
+     <h2>Labour Cost: x</h2>
+     <h2>Material Cost: x</h2>
+     <h2>Total Estimate Price: x</h2>
+     
+     <div class="valueDisplay">
+         <h2 class="columns">Contingency %: <input type="number" placeholder="0"></h2>
+         <h2 class="columns">Overhead %: <input type="number" placeholder="0"></h2>
+         <h2 class="columns">Profit %: <input type="number" placeholder="0"></h2>
+     </div>
+
+     <div class="valueDisplay">
+        <h2 class="columns">Gross-Margin %: x</h2>
+        <h2 class="columns">Mark-up %: x</h2>
+     </div>
      
      <table id="QuoteTable">
       <thead>
@@ -18,6 +34,7 @@
           <th>Quantity</th>
           <th>Unit</th>
           <th>Material Cost</th>
+          <th>Material Total</th>
           <th>Min/Unit</th>
           <th>Labour Hours</th>
           <th>Labour Total</th>
