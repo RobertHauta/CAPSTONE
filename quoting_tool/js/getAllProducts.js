@@ -1,5 +1,14 @@
 var table = document.getElementById("ProductTable");
 var prev_search = "";
+var cur_results = [];
+var lineItems = [];
+
+var quote_Button = document.getElementById("QuoteButton");
+quote_Button.addEventListener("click", function(e){
+    serialized_items = JSON.stringify(lineItems);
+    document.cookie = "Items=" + serialized_items + ";path=/";
+    window.location.href = "quote_page.html";
+});
 
 parent.Xrm.WebApi.retrieveMultipleRecords("crmdqe_productsservices", "?$select=crmdqe_descriptionshort,crmd_unitid,crmd_purchaseunitcost,crmd_make,crmdqe_category1,crmdqe_category2,crmdqe_category3&$expand=crmd_unitid($select=crmd_name)").then(
     function success(result) {
@@ -22,8 +31,16 @@ parent.Xrm.WebApi.retrieveMultipleRecords("crmdqe_productsservices", "?$select=c
             cell6.innerHTML = result.entities[i].crmdqe_category2;
             cell7.innerHTML = result.entities[i].crmdqe_category3;
             
+            cur_results[result.entities.length - i - 1] = result.entities[i];
+            
             var button = document.createElement("button");
-            button.innerHTML = "Add to Quote";
+            button.addEventListener('click', function(event) {
+                // Find the row of the clicked button
+                const rowIndex = event.target.closest('tr').rowIndex; // Gets the row index (starts from 1)
+                lineItems[lineItems.length] = cur_results[rowIndex-1];
+            });
+            button.innerHTML = "+ Quote";
+            button.setAttribute('class', 'btn btn-secondary');
             cell8.appendChild(button);
         }
         // perform operations on record retrieval
@@ -60,6 +77,7 @@ function searchBarHandler(){
     
     parent.Xrm.WebApi.retrieveMultipleRecords("crmdqe_productsservices", "?$select=crmdqe_descriptionshort,crmd_unitid,crmd_purchaseunitcost,crmd_make,crmdqe_category1,crmdqe_category2,crmdqe_category3&$expand=crmd_unitid($select=crmd_name)&$filter=contains(crmdqe_descriptionshort,'" + search + "')").then(
     function success(result) {
+        cur_results.length = 0;
         for(let i = 0; i < result.entities.length; i++){
             //Formatting Rows
             var row = table.tBodies[0].insertRow(0);
@@ -82,7 +100,15 @@ function searchBarHandler(){
             cell7.innerHTML = result.entities[i].crmdqe_category3;
             
             //Inserting add to Quote Button
+            cur_results[result.entities.length - i - 1] = result.entities[i];
+            
             var button = document.createElement("button");
+            button.addEventListener('click', function(event) {
+                // Find the row of the clicked button
+                const rowIndex = event.target.closest('tr').rowIndex; // Gets the row index (starts from 1)
+                addedLineItems[addedLineItems.length] = cur_results[rowIndex-1];
+                console.log(addedLineItems[addedLineItems.length-1]);
+            });
             button.innerHTML = "Add to Quote";
             cell8.appendChild(button);
         }
