@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+     <h1>Product Catalogue</h1>
+     <input id="SearchBar" type="search" placeholder="Search" aria-label="Search">
+     <button id="SearchButton" class="btn btn-secondary" type="button">Search</button>
+     <button id="QuoteButton" class="btn btn-primary">Quote</button>
+     
+     <table id="ProductTable">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Unit</th>
+          <th>Purchase Unit</th>
+          <th>Make</th>
+          <th>Category 1</th>
+          <th>Category 2</th>
+          <th>Category 3</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+     </table>
+    
+    <script type='text/javascript' > 
+        var addedLineItems = []; 
+     </script>
+    <script src="../js/getAllProducts.js" charset="utf-8"></script>
+    <script src="../js/quoting_manager.js" charset="utf-8"></script>
+</body>
+
+</html>
