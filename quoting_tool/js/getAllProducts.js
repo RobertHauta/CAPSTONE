@@ -7,8 +7,13 @@
 
 var table = document.getElementById("ProductTable");
 var prev_search = "";
+var prev_make = "Make";
+var prev_cat1 = "Cat1";
+var prev_cat2 = "Cat2";
+var prev_cat3 = "Cat3";
 var cur_results = [];
 var quoteLineItems = [];
+var make_types = [];
 var cat1_mat_types = [];
 var cat2_mat_types = [];
 var cat3_mat_types = [];
@@ -25,6 +30,21 @@ quote_Button.addEventListener("click", function(e){
     redirect = true;
     window.location.href = "quote_page.html";
 });
+
+var make_Dropdown = document.getElementById("Make");
+make_Dropdown.addEventListener("change", filterMake);
+
+var cat1_Dropdown = document.getElementById("Cat1");
+cat1_Dropdown.addEventListener("change", filterCat1);
+
+var cat2_Dropdown = document.getElementById("Cat2");
+cat2_Dropdown.addEventListener("change", filterCat2);
+
+var cat3_Dropdown = document.getElementById("Cat3");
+cat3_Dropdown.addEventListener("change", filterCat3);
+
+var top_button = document.getElementById("TopButton");
+top_button.addEventListener("click", scrollToTop);
 
 var serialized = getCookie("Items");
 if (serialized) {
@@ -45,6 +65,7 @@ searchBar.addEventListener('keypress', function (e) {
       searchBarHandler();
     }
 });
+searchBar.addEventListener('blur', searchBarHandler);
 
 //When the window is closed delete the "Items" cookie
 window.addEventListener('beforeunload', (event) => {
@@ -55,7 +76,6 @@ window.addEventListener('beforeunload', (event) => {
 });
 
 cataloguePopulator("crmdqe_productsservices", fetch_unfiltered);
-
 //
 //
 // END OF CODE EXECUTED ON OPEN
@@ -109,25 +129,19 @@ parent.Xrm.WebApi.retrieveMultipleRecords(tableName, queryString).then(
             
             cur_results[result.entities.length - i - 1] = result.entities[i];
             
-             //Conditions to set what type of materials are in each category for filtering later
-            if(cat1_mat_types.includes(result.entities[i].crmdqe_category1) == false){
-                cat1_mat_types[cat1_mat_types.length] = result.entities[i].crmdqe_category1;
-            }
-            if(cat2_mat_types.includes(result.entities[i].crmdqe_category2) == false){
-                cat2_mat_types[cat2_mat_types.length] = result.entities[i].crmdqe_category2;
-            }
-            if(cat3_mat_types.includes(result.entities[i].crmdqe_category3) == false){
-                cat3_mat_types[cat3_mat_types.length] = result.entities[i].crmdqe_category3;
-            }
-            
-            //populating the category filter dropdowns
-            // for (let j = 1; j <= 3; j++) {
-            //     let selectId = '#arr' + j;
-            //     let arrId = '#cat' + j + '_mat_types';
-            //     $.each(arrId, function (i, val) {
-            //         $(selectId).append($('<option></option>').val(val).html(val));
-            //     });
-            // }
+           //Conditions to set what type of materials are in each category for filtering later
+           if (!make_types.includes(result.entities[i].crmd_make) && result.entities[i].crmd_make != null) {
+                    make_types.push(result.entities[i].crmd_make);
+           }
+           if (!cat1_mat_types.includes(result.entities[i].crmdqe_category1) && result.entities[i].crmdqe_category1 != null) {
+                    cat1_mat_types.push(result.entities[i].crmdqe_category1);
+           }
+           if (!cat2_mat_types.includes(result.entities[i].crmdqe_category2) && result.entities[i].crmdqe_category2 != null) {
+                    cat2_mat_types.push(result.entities[i].crmdqe_category2);
+           }
+           if (!cat3_mat_types.includes(result.entities[i].crmdqe_category3) && result.entities[i].crmdqe_category3 != null) {
+                    cat3_mat_types.push(result.entities[i].crmdqe_category3);
+           }
             
             var button = document.createElement("button");
             button.addEventListener('click', function(event) {
@@ -139,7 +153,10 @@ parent.Xrm.WebApi.retrieveMultipleRecords(tableName, queryString).then(
             button.setAttribute('class', 'btn btn-secondary');
             cell8.appendChild(button);
         }
-        // perform operations on record retrieval
+        populateDropdown(cat1_mat_types.sort(), "Cat1");
+        populateDropdown(cat2_mat_types.sort(), "Cat2");
+        populateDropdown(cat3_mat_types.sort(), "Cat3");
+        populateDropdown(make_types.sort(), "Make");
     },
     function (error) {
         
@@ -165,8 +182,118 @@ function searchBarHandler(){
                                    + "&$expand=crmd_unitid($select=crmd_name)&$filter=contains(crmdqe_descriptionshort,'" + search + "')";
                                    
     cataloguePopulator("crmdqe_productsservices", fetch_searchfiltered);
+    prev_search = search;
 }
 
+function populateDropdown(array, id){
+    //populating the category filter dropdowns
+    var dropdown = document.getElementById(id);
+        array.forEach(optionText => {
+        const option = document.createElement('option');
+        option.value = optionText; // This will be the value of the option
+        option.textContent = optionText; // This will be the visible text in the dropdown
+        dropdown.appendChild(option); // Append the option to the dropdown
+    });
+}
+
+function filterMake(){
+   var make = make_Dropdown.value;
+   console.log(make);
+  if (make == prev_make){    //value is same as before
+      return;
+  }
+  /*if (make == "Make"){  //resetting the table
+      cataloguePopulator("crmdqe_productsservices", fetch_unfiltered);
+      return;
+  }*/
+    
+  for(var i = table.rows.length - 1; i > 0; i--){
+      table.deleteRow(i);
+  }
+
+  var fetch_searchfiltered = "?$select=crmdqe_descriptionshort,crmd_unitid,crmd_make,crmdqe_category1,crmdqe_category2,crmdqe_category3,crmdqe_costpricebc, crmd_minimumsellingquantity, davinci_laborminperunit"
+                                   + "&$expand=crmd_unitid($select=crmd_name)&$filter=contains(crmd_make,'" + make + "')";
+         
+  cataloguePopulator("crmdqe_productsservices", fetch_searchfiltered);
+
+  prev_make = make;
+  return; 
+ }
+ 
+function filterCat1() {
+    var cat1 = cat1_Dropdown.value;
+    if (cat1 == prev_cat1) {    //value is same as before
+        return;
+    }
+    /*if (cat1 == "Cat1") {  //resetting the table
+        cataloguePopulator("crmdqe_productsservices", fetch_unfiltered);
+        return;
+    }*/
+
+    for (var i = table.rows.length - 1; i > 0; i--) {
+        table.deleteRow(i);
+    }
+
+    var fetch_searchfiltered = "?$select=crmdqe_descriptionshort,crmd_unitid,crmd_make,crmdqe_category1,crmdqe_category2,crmdqe_category3,crmdqe_costpricebc, crmd_minimumsellingquantity, davinci_laborminperunit"
+        + "&$expand=crmd_unitid($select=crmd_name)&$filter=contains(crmdqe_category1,'" + cat1 + "')";
+
+    cataloguePopulator("crmdqe_productsservices", fetch_searchfiltered);
+
+    prev_cat1 = cat1;
+    return;
+}
+
+function filterCat2() {
+    var cat2 = cat2_Dropdown.value;
+    if (cat2 == prev_cat2) {    //value is same as before
+        return;
+    }
+    /*if (cat2 == "Cat2") {  //resetting the table
+        cataloguePopulator("crmdqe_productsservices", fetch_unfiltered);
+        return;
+    }*/
+
+    for (var i = table.rows.length - 1; i > 0; i--) {
+        table.deleteRow(i);
+    }
+
+    var fetch_searchfiltered = "?$select=crmdqe_descriptionshort,crmd_unitid,crmd_make,crmdqe_category1,crmdqe_category2,crmdqe_category3,crmdqe_costpricebc, crmd_minimumsellingquantity, davinci_laborminperunit"
+        + "&$expand=crmd_unitid($select=crmd_name)&$filter=contains(crmdqe_category2,'" + cat2 + "')";
+
+    cataloguePopulator("crmdqe_productsservices", fetch_searchfiltered);
+
+    prev_cat2 = cat2;
+    return;
+}
+
+function filterCat3() {
+    var cat3 = cat3_Dropdown.value;
+    if (cat3 == prev_cat3) {    //value is same as before
+        return;
+    }
+    /*if (cat3 == "Cat3") {  //resetting the table
+        cataloguePopulator("crmdqe_productsservices", fetch_unfiltered);
+        return;
+    }*/
+
+    for (var i = table.rows.length - 1; i > 0; i--) {
+        table.deleteRow(i);
+    }
+
+    var fetch_searchfiltered = "?$select=crmdqe_descriptionshort,crmd_unitid,crmd_make,crmdqe_category1,crmdqe_category2,crmdqe_category3,crmdqe_costpricebc, crmd_minimumsellingquantity, davinci_laborminperunit"
+        + "&$expand=crmd_unitid($select=crmd_name)&$filter=contains(crmdqe_category3,'" + cat3 + "')";
+
+    cataloguePopulator("crmdqe_productsservices", fetch_searchfiltered);
+
+    prev_cat3 = cat3;
+    return;
+}   
+    
+
+
+function scrollToTop(){
+    document.documentElement.scrollTop = 0;
+}
 //
 //
 // END OF FUNCTIONS
