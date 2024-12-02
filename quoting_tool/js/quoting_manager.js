@@ -14,81 +14,33 @@ var redirect = false;
 //Adding watch for user to enter or blur from textfield
 //if so update calculated fields with new values
 var wageField = document.getElementById("Wage");
-wageField.addEventListener('keypress', function(event){
-    if(event.key === "Enter"){
-        if(event.target.value < 0){
-            event.target.value = 0;
-        }
-        reCalcBusiness();
-    }
-});
-wageField.addEventListener('blur', function(event){
-    if(event.target.value < 0){
-        event.target.value = 0;
-    }
-    reCalcBusiness();
-});
-wageField.value = 45;
+wageField.addEventListener('keypress', (event) => {reCalcEvent(event); });
+wageField.addEventListener('blur', (event) => {reCalcEvent(event); });
+wageField.value = 35; /////////////////// NOT EPIC'S DEFAULT VALUES CHANGE AFTER EVALUATIONS
 
 //Contingency % field at top of page
 //Adding watch for user to enter or blur from textfield
 //if so update calculated fields with new values
 var contingency_percent = document.getElementById("Contingency%");
-contingency_percent.addEventListener('keypress', function(event){
-    if(event.key === "Enter"){
-        if(event.target.value < 0){
-            event.target.value = 0;
-        }
-        reCalcBusiness();
-    }
-});
-contingency_percent.addEventListener('blur', function(event){
-    if(event.target.value < 0){
-        event.target.value = 0;
-    }
-    reCalcBusiness();
-});
-contingency_percent.value = 3.7;
+contingency_percent.addEventListener('keypress', (event) => {reCalcEvent(event); });
+contingency_percent.addEventListener('blur', (event) => {reCalcEvent(event); });
+contingency_percent.value = 2.0; /////////////////// NOT EPIC'S DEFAULT VALUES CHANGE AFTER EVALUATIONS
 
 //overhead % field at top of page
 //Adding watch for user to enter or blur from textfield
 //if so update calculated fields with new values
 var overhead_percent = document.getElementById("Overhead%");
-overhead_percent.addEventListener('keypress', function(event){
-    if(event.key === "Enter"){
-        if(event.target.value < 0){
-            event.target.value = 0;
-        }
-        reCalcBusiness();
-    }
-});
-overhead_percent.addEventListener('blur', function(event){
-    if(event.target.value < 0){
-        event.target.value = 0;
-    }
-    reCalcBusiness();
-});
-overhead_percent.value = 15;
+overhead_percent.addEventListener('keypress', (event) => {reCalcEvent(event); });
+overhead_percent.addEventListener('blur', (event) => {reCalcEvent(event); });
+overhead_percent.value = 10; /////////////////// NOT EPIC'S DEFAULT VALUES CHANGE AFTER EVALUATIONS
 
 //profit % field at top of page
 //Adding watch for user to enter or blur from textfield
 //if so update calculated fields with new values
 var profit_percent = document.getElementById("Profit%");
-profit_percent.addEventListener('keypress', function(event){
-    if(event.key === "Enter"){
-        if(event.target.value < 0){
-            event.target.value = 0;
-        }
-        reCalcBusiness();
-    }
-});
-profit_percent.addEventListener('blur', function(event){
-    if(event.target.value < 0){
-        event.target.value = 0;
-    }
-    reCalcBusiness();
-});
-profit_percent.value = 10;
+profit_percent.addEventListener('keypress', (event) => {reCalcEvent(event); });
+profit_percent.addEventListener('blur', (event) => {reCalcEvent(event); });
+profit_percent.value = 7.5; /////////////////// NOT EPIC'S DEFAULT VALUES CHANGE AFTER EVALUATIONS
 
 //Button for redirecting to the product catalogue page
 //Before redirect clear cookies and update with most recent line item info
@@ -170,6 +122,9 @@ function calcTotalValues(){
     var totalSell = parseFloat(totalCost) * (1 + ((parseFloat(contingency_percent.value) + parseFloat(overhead_percent.value))/100.0)) * (1 + (parseFloat(profit_percent.value)/100.0));
     var markup = ((1 + ((parseFloat(contingency_percent.value) + parseFloat(overhead_percent.value))/100.0)) * (1 + (parseFloat(profit_percent.value)/100.0)) - 1) * 100;
     var margin = (parseFloat(markup) / (100 + parseFloat(markup)))*100;
+    var contingencyCost = parseFloat(totalCost) * (parseFloat(contingency_percent.value)/100);
+    var overheadCost = parseFloat(totalCost) * (parseFloat(overhead_percent.value)/100);
+    var profitCost = parseFloat(totalSell) - (parseFloat(totalCost) + parseFloat(contingencyCost) + parseFloat(overheadCost));
     
     var laborHoursField = document.getElementById("LabHours");
     laborHoursField.innerHTML = "Labour Hours: " + laborHours.toFixed(3);
@@ -191,6 +146,15 @@ function calcTotalValues(){
     
     var markupField = document.getElementById("Markup");
     markupField.innerHTML = "Mark-up %: " + markup.toFixed(3);
+    
+    var overhead$Field = document.getElementById("Over$");
+    overhead$Field.innerHTML = overheadCost.toFixed(2);
+    
+    var contingency$Field = document.getElementById("Cont$");
+    contingency$Field.innerHTML = contingencyCost.toFixed(2);
+    
+    var profit$Field = document.getElementById("Pro$");
+    profit$Field.innerHTML = profitCost.toFixed(2);
 }
 
 //Calls business logic for every row in the table
@@ -272,7 +236,7 @@ function tableReCalc(){
     //when quantity is changed ensure it is >=0 then apply business logic
     quantityInput.addEventListener("keypress", function(event){
         if (event.key == 'Enter') {
-            if(event.target.value < 0){
+            if(event.target.value < 0 || !event.target.value){
                 event.target.value = 0;
             }
             businessLogic(event.target.closest('tr').rowIndex);
@@ -280,13 +244,13 @@ function tableReCalc(){
         }
     });
     quantityInput.addEventListener("blur", function(event){
-        if(event.target.value < 0){
+        if(event.target.value < 0 || !event.target.value){
                 event.target.value = 0;
         }
         businessLogic(event.target.closest('tr').rowIndex);
         calcTotalValues();
     });
-
+    quantityInput.value = 0;
     cell2.appendChild(quantityInput);
     
     // allows material price to be editable
@@ -309,7 +273,7 @@ function tableReCalc(){
         calcTotalValues();
     });
     materialInput.value = lineItems[i].crmdqe_costpricebc;
-    
+    cell4.innerHTML = "$";
     cell4.appendChild(materialInput);
     
     // min/unit to be editable
@@ -360,6 +324,15 @@ function tableReCalc(){
     cell11.appendChild(button);
 }
 calcTotalValues();
+}
+
+function reCalcEvent(event){
+    if(event.type === 'keypress' && !(event.key === 'Enter')){ return; }
+    
+    if(event.target.value < 0 || !event.target.value){
+        event.target.value = 0;
+    }
+    reCalcBusiness();
 }
 
 //
