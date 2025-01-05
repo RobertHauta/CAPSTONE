@@ -49,7 +49,8 @@ function populateTable() {
         // Create the hidden row
         for(let j = 1; j <= itemCount; j++){
             const hiddenRow = $(`<tr id="hidden_row${uniqueId}${j}" class="hidden_row" style="display: none;">`).appendTo($('#TemplateTable'));
-            $('<td colspan="8">').css('width', '100%').html(templateInfo[i].quote_details[j-1].productname).appendTo(hiddenRow);
+            $('<td>').html("").appendTo(hiddenRow);
+            $('<td>').css({'grid-column': 'span 7', 'width': '100%'}).html(templateInfo[i].quote_details[j-1].productname).appendTo(hiddenRow);
         }
     }
 }
