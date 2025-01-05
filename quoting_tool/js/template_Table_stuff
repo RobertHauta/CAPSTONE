@@ -1,0 +1,97 @@
+var fetchXml = `
+<fetch>
+	<!-- Table -->
+	<entity name="quote">
+        <filter type="and">
+			<condition attribute="new_istemplate" operator="eq" value="1" />
+		</filter>
+        <attribute name="name" />
+		<!-- One To Many Relationships -->
+		<link-entity name="quotedetail" from="quoteid" to="quoteid" alias="quote_details" link-type="outer">
+			<attribute name="productid" />
+			<attribute name="productidname" />
+            <link-entity name="product" from="productid" to="productid" alias="product_quote_details" link-type="outer">
+                <attribute name="name" />
+            </link-entity>
+		</link-entity>
+	</entity>
+</fetch>
+`;
+
+var templateInfo = [];
+getTemplateAPI();
+//populateTable();
+
+function populateTable() {
+    for (let i = 0; i < templateInfo.length; i++) {
+        console.log(templateInfo[i]);
+        // Create the parent row
+        const parentRow = $(`<tr>`).appendTo($('#TemplateTable'));
+        const uniqueId = templateInfo[i].name.replace(/\s+/g, "_"); // Create a unique ID from the name
+        const itemCount = templateInfo[i].quote_details.length;
+        // Add onclick handler for the parent row
+        parentRow.click(function () {
+            for(let k = 1; k <= itemCount; k++){
+                $(`#hidden_row${uniqueId}${k}`).toggle();
+            }
+        });
+
+        // Append cells to the parent row
+        $('<td>').html(templateInfo[i].name).appendTo(parentRow);
+        $('<td>').html("Empty").appendTo(parentRow);
+        $('<td>').html("Empty").appendTo(parentRow);
+        $('<td>').html("Empty").appendTo(parentRow);
+        $('<td>').html("Empty").appendTo(parentRow);
+        $('<td>').html("Empty").appendTo(parentRow);
+        $('<td>').html("Empty").appendTo(parentRow);
+        $('<td>').html("Empty").appendTo(parentRow);
+
+        // Create the hidden row
+        for(let j = 1; j <= itemCount; j++){
+            const hiddenRow = $(`<tr id="hidden_row${uniqueId}${j}" class="hidden_row" style="display: none;">`).appendTo($('#TemplateTable'));
+            $('<td colspan="8">').css('width', '100%').html(templateInfo[i].quote_details[j-1].productname).appendTo(hiddenRow);
+        }
+    }
+}
+
+function getTemplateAPI(){
+parent.Xrm.WebApi.retrieveMultipleRecords("quote", `?fetchXml=${encodeURIComponent(fetchXml)}`).then(
+	function success(results) {
+		console.log(results);
+    
+    templateInfo.length = 0;
+    templateInfo = JSON.parse(JSON.stringify(results.entities.reduce((acc, record) => {
+      const parentId = record.quoteid;
+
+      // Check if this quote already exists in the accumulator
+      let parent = acc.find(item => item.quoteid === parentId);
+
+      if (!parent) {
+        // If not, add a new parent object
+        parent = {
+          quoteid: parentId,
+          name: record.name,
+          quote_details: []
+        };
+        acc.push(parent);
+      }
+
+      // Add the child (quote_details) record if it exists
+      if (record["quote_details.productid"]) {
+          parent.quote_details.push({
+          productid: record["quote_details.productid"],
+          productname: record["product_quote_details.name"]
+        });
+      }
+
+      return acc;
+    }, [])));
+
+    populateTable();
+
+	},
+	function(error) {
+		console.log(error.message);
+	}
+);
+}
