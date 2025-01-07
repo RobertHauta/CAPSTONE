@@ -1,3 +1,39 @@
+{
+    $('#ProductButton').on("click", function(e){
+       /* var serialized_items = "";
+        if(!(lineItems.length === 0)){
+            serialized_items = JSON.stringify(lineItems);
+        }
+        sessionStorage.setItem('Items', serialized_items); //= "Items=" + serialized_items + ";path=/";
+        redirect = true;*/
+        
+        window.location.href = "product_catalogue.html";
+    });
+}
+
+{
+    $('#QuoteButton').on("click", function(e){
+        /*var serialized_items = "";
+        if(!(lineItems.length === 0)){
+            serialized_items = JSON.stringify(lineItems);
+        }
+        sessionStorage.setItem('Items', serialized_items); //= "Items=" + serialized_items + ";path=/";
+        redirect = true;*/
+        
+        window.location.href = "quote_page.html";
+    });
+}
+
+$('#TopButton').on("click", scrollToTop);
+
+//Scrolls back to top of page	
+function scrollToTop(){
+    $('html, body').animate({ scrollTop: 0 }, 1000); // 'slow' or duration in milliseconds
+}
+
+
+// FetchXML Testing Gone Wild
+
 var fetchXml = `
 <fetch>
 	<!-- Table -->
