@@ -5,6 +5,8 @@
 
 //variable holding all line item json objects
 var lineItems = [];
+var existingLineItems = [];
+var hasLoaded = true;
 //parameter to check when leaving a page to see if its redirecting or exiting the quote manager
 var redirect = false;
 //Test Values will be dynamic in future
@@ -103,12 +105,8 @@ window.onclick = function(event) {
 //Before redirect clear sessionstorage and update with most recent line item info
 {
     $('#ProductButton').on("click", function(e){
-        //Cookies.remove('Items');//del_cookie("Items");
-        var serialized_items = "";
-        if(!(lineItems.length === 0)){
-            serialized_items = JSON.stringify(lineItems);
-        }
-        sessionStorage.setItem('Items', serialized_items); //= "Items=" + serialized_items + ";path=/";
+        saveSession("existing", existingLineItems);
+        saveSession("Items", lineItems);
         saveMetrics();
         redirect = true;
         window.location.href = "product_catalogue.html";
@@ -117,15 +115,10 @@ window.onclick = function(event) {
 
 {
     $('#TemplateButton').on("click", function(e){
-        //Cookies.remove('Items');//del_cookie("Items");
-        
-        var serialized_items = "";
-        if(!(lineItems.length === 0)){
-            serialized_items = JSON.stringify(lineItems);
-        }
-        sessionStorage.setItem('Items', serialized_items); //= "Items=" + serialized_items + ";path=/";
+        saveSession("existing", existingLineItems);
+        saveSession("Items", lineItems);
+        saveMetrics();
         redirect = true;
-        
         window.location.href = "template_page.html";
     });
 }
@@ -145,6 +138,15 @@ window.addEventListener('beforeunload', (event) => {
     if (serialized_items) {
         // Parse the serialized array back into an actual array
         lineItems = JSON.parse(serialized_items);
+    } else {
+        console.log("No data found in storage.");
+    }
+}
+{
+    var serialized_items = sessionStorage.getItem('existing');//Cookies.get('Items'); //getCookie("Items");
+    if (serialized_items) {
+        // Parse the serialized array back into an actual array
+        existingLineItems = JSON.parse(serialized_items);
     } else {
         console.log("No data found in storage.");
     }
@@ -173,6 +175,16 @@ else{
 // START OF FUNCTIONS
 //
 //
+
+//a key value pair saves to session storage
+function saveSession(key, obj){
+    var serialized_items = "";
+    if(!(obj.length === 0)){
+        serialized_items = JSON.stringify(obj);
+    }
+    sessionStorage.setItem(key, serialized_items); //= "Items=" + serialized_items + ";path=/";
+}
+
 function saveMetrics(){
     var metricsJSON = {
         Wage: $('#Wage').val(),
@@ -434,9 +446,8 @@ function saveQuote(){
     }
     //if quote already exists then create new version
     else{
-    
+        updateQuoteAPI(false);
     }
-    saveNewQuote(false);
 }
 
 //Enables loading circle and disables rest of page
@@ -454,6 +465,273 @@ function loadingCircle(){
 //Scrolls back to top of page	
 function scrollToTop(){
     $('html, body').animate({ scrollTop: 0 }, 1000); // 'slow' or duration in milliseconds
+}
+
+//This function formats line item information to json to be used in deep insert
+function saveLineItemQuote(product, index){
+    //Initializing Quote line item details to be sent to dataverse
+    var row = $('#QuoteTable tbody tr').eq(index);    
+    var record = {};
+    record.msdyn_estimatedcost = Number(parseFloat(row.find('td:eq(8)').text()).toFixed(4)); // Currency
+    record.priceperunit = Number(parseFloat(product.davinci_purchaseunitcost).toFixed(4)); // Currency
+    record["productid@odata.bind"] = `/products(${product.productid})`; // Lookup
+    record.productname = product.name; // Text
+    record.msdyn_costtotal = Number(parseFloat(row.find('td:eq(9)').text()).toFixed(4)); // Currency
+    record.quantity = Number(product.quantity); // Decimal
+    record["uomid@odata.bind"] = `/uoms(${product.defaultuomid.uomid})`; // Lookup
+    record.msdyn_budgetamount = Number(parseFloat(row.find('td:eq(9)').text()).toFixed(4)); // Currency
+    record.new_labourminperunit = Number(parseFloat(product.davinci_laborminperunit).toFixed(4)); // Decimal
+    return record;
+}
+
+function updateRequest(product, index){
+    var row = $('#QuoteTable tbody tr').eq(index); 
+    const record = {};
+    record.data = {};
+    record.entityName = product.guid;
+    record.data.priceperunit = Number(parseFloat(product.davinci_purchaseunitcost).toFixed(4)); // Currency
+    record.data.msdyn_estimatedcost = Number(parseFloat(row.find('td:eq(8)').text()).toFixed(4)); // Currency
+    record.data.msdyn_costtotal = Number(parseFloat(row.find('td:eq(9)').text()).toFixed(4)); // Currency
+    record.data.quantity = Number(product.quantity); // Decimal
+    record.data.msdyn_budgetamount = Number(parseFloat(row.find('td:eq(9)').text()).toFixed(4)); // Currency
+    record.data.new_labourminperunit = Number(parseFloat(product.davinci_laborminperunit).toFixed(4)); // Decimal
+
+    
+    return record;
+}
+
+function createRequest(product, index){
+    var row = $('#QuoteTable tbody tr').eq(index); 
+    const record = {};
+    
+    // Lookup field for the related quote
+    record["quoteid@odata.bind"] = `/quotes(${QuoteId})`;
+
+    // Fields to populate in the new record
+    record.priceperunit = Number(parseFloat(product.davinci_purchaseunitcost).toFixed(4)); // Currency
+    record.msdyn_estimatedcost = Number(parseFloat(row.find('td:eq(8)').text()).toFixed(4)); // Currency
+    record["productid@odata.bind"] = `/products(${product.productid})`; // Lookup
+    record.productname = product.name; // Text
+    record.msdyn_costtotal = Number(parseFloat(row.find('td:eq(9)').text()).toFixed(4)); // Currency
+    record.quantity = Number(product.quantity); // Decimal
+    record["uomid@odata.bind"] = `/uoms(${product.defaultuomid.uomid})`; // Lookup
+    record.msdyn_budgetamount = Number(parseFloat(row.find('td:eq(9)').text()).toFixed(4)); // Currency
+    record.new_labourminperunit = Number(parseFloat(product.davinci_laborminperunit).toFixed(4)); // Decimal
+
+    return record;
+}
+
+//
+//
+// Start API Call Functions
+//
+//
+
+function updateQuoteAPI(isTemplate){
+    //disables page
+    loadingCircle();
+    var quoteRecords = [];
+    var lineUpdateRecords = [];
+    var lineCreateRecords = [];
+    var lineDeleteRecords = [];
+    
+    {
+        var totPrice = $('#FinalPrice').text();
+        var totalCost = $('#TotCost').text();
+        var totMat = $('#TotMat').text();
+        
+        var record = {};
+        record.data = {};
+        record.entityName = `/quote(${QuoteId})`;
+        record.data.name = $('#QuoteName').html(); // Text
+        record.data.new_istemplate = isTemplate; // Boolean
+        record.data.msdyn_invoicesetuptotals = Number((parseFloat(totPrice.substring(23)) - parseFloat(totMat.substring(17))).toFixed(4)); // Currency
+        record.data.msdyn_estimatedcost = Number(parseFloat(totalCost.substring(13)).toFixed(4)); // Currency
+        record.data.new_laborrate = Number($('#Wage').val()); // Decimal
+        record.data.new_profitmargin = Number($('#Profit\\%').val()); // Decimal
+        record.data.new_contingencymargin = Number($('#Contingency\\%').val()); // Decimal
+        record.data.new_overheadmargin = Number($('#Overhead\\%').val()); // Decimal
+
+        quoteRecords.push(record);
+    }
+    
+    //three cases - item is brand new - item is being updated - item is being removed
+    var i = 0;
+    lineItems.forEach((product) => {
+        if(existingLineItems.some(item => item["productid"] === product["productid"])){
+             lineUpdateRecords.push(updateRequest(product, i));
+        }
+        else{
+             lineCreateRecords.push(createRequest(product, i));
+        }
+        i++;
+    });
+    
+    var requests = [];
+    quoteRecords.forEach( (record) => {
+        
+        var request = {
+            etn: "quote",
+            id: QuoteId,
+            payload: record.data,
+            getMetadata: function () { return { boundParameter: null, parameterTypes: {}, operationType: 2, operationName: "Update" }; }
+        };
+
+        requests.push(request);
+    });
+    
+    lineUpdateRecords.forEach( (record) => {
+        var request = {
+            etn: "quotedetail",
+            id: record.entityName,
+            payload: record.data,
+            getMetadata: function () { return { boundParameter: null, parameterTypes: {}, operationType: 2, operationName: "Update" }; }
+        };
+        requests.push(request);
+    });
+    
+    lineCreateRecords.forEach( (record) => {
+        var request = {
+            etn: "quotedetail",
+            payload: record,
+            getMetadata: function () { return { boundParameter: null, parameterTypes: {}, operationType: 2, operationName: "Create" }; }
+        };
+
+        requests.push(request);
+    });
+    existingLineItems.forEach( (product) => {
+        if(!lineItems.some(item => item["productid"] === product["productid"])){
+            var request = {
+                entityReference: { entityType: "quotedetail", id: product.guid },
+                getMetadata: function () { return { boundParameter: null, parameterTypes: {}, operationType: 2, operationName: "Delete" }; }
+            };
+            requests.push(request);
+        }
+    });
+    
+    var allReq = [];
+    allReq.push(requests);
+    parent.Xrm.WebApi.online.executeMultiple(allReq).then(
+        function (response) {
+            loadingCircle();
+            console.log("Batch request completed successfully");
+            console.log(response);
+            Swal.fire({
+                    title: 'Success',
+                    text: `${isTemplate ? "Template" : "Quote"} Saved`,
+                    icon: 'success',
+                    confirmButtonText: 'Okay'
+                });
+        },
+        function (error) {
+            loadingCircle();
+            console.error("Batch request failed", error);
+            Swal.fire({
+                    title: 'Error',
+                    text: `An Error Occured. ${isTemplate ? "Template" : "Quote"} Could Not be Saved.`,
+                    icon: 'error',
+                    showCancelButton: true,
+                    confirmButtonText: 'Show Details',
+                    cancelButtonText: 'Dismiss',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                    // Show detailed error information for debugging
+                        Swal.fire({
+                            title: 'Error Details',
+                            html: `
+                                <p><strong>Error Code:</strong> ${error.code || 'N/A'}</p>
+                                <p><strong>Message:</strong> ${error.message}</p>
+                                <p><strong>Stack Trace:</strong></p>
+                                <pre>${error.stack || 'No Stack Trace Available'}</pre>`
+                            ,
+                            icon: 'info',
+                            confirmButtonText: 'Close'
+                        });
+                    }
+                });
+        }
+    );
+}
+
+// Retrieves the quote passed from the mda along with all line items associated with it
+// Appends these lines items to the array of line items
+function getQuoteAPI(){
+    var fetchXml = `<fetch>
+                        <!-- Table -->
+                        <entity name="quote">
+                            <!-- Columns -->
+                            <attribute name="quoteid" />
+                            <attribute name="name" />
+                            <attribute name="new_overheadmargin" />
+                            <attribute name="new_contingencymargin" />
+                            <attribute name="new_profitmargin" />
+                            <attribute name="new_laborrate" />
+                            <!-- Filter By -->
+                            <filter type="and">
+                                <condition attribute="revisionnumber" operator="eq" value="${QuoteInfo.revisionNumber}" />
+                                <condition attribute="quotenumber" operator="eq" value="${QuoteInfo.quoteNumber}" />
+                            </filter>
+                            <!-- One To Many Relationships -->
+                            <link-entity name="quotedetail" from="quoteid" to="quoteid" alias="quote_details" link-type="outer">
+                                <attribute name="productid" />
+                                <attribute name="productidname" />
+                                <attribute name="new_labourminperunit" />
+                                <attribute name="priceperunit" />
+                                <attribute name="productname" />
+                                <attribute name="quantity" />
+                                <attribute name="uomid" />
+                                <attribute name="uomidname" />
+                                <attribute name="quotedetailid" />
+                            </link-entity>
+                        </entity>
+                    </fetch>`;
+                    
+    // using async stuff so that table is not populated before the retrieve is finished
+    return new Promise((resolve, reject) => {
+        parent.Xrm.WebApi.retrieveMultipleRecords("quote", `?fetchXml=${encodeURIComponent(fetchXml)}`).then(
+            function success(results) {
+                for (var i = 0; i < results.entities.length; i++) {
+                    var result = results.entities[i];
+                    // Columns
+                    QuoteId = result["quoteid"]; // Guid
+                    if($('#QuoteName').html() === 'New Quote'){
+                        $('#QuoteName').html(result.name);
+                        $('#Wage').val(Number(result["new_laborrate"]));
+                        $('#Profit\\%').val(Number(result["new_profitmargin"])); // Decimal
+                        $('#Contingency\\%').val(Number(result["new_contingencymargin"])); // Decimal
+                        $('#Overhead\\%').val(Number(result["new_overheadmargin"])); // Decimal                      
+                        hasLoaded = false;
+                    }
+                    if(!result["quote_details.productname"]){ continue; }
+                    // Formatting line items to be consistent with json objects made previously
+                    if(['Roof Estimate', 'Wall Estimate', 'Change Order'].includes(result["quote_details.productname"])) {
+                        continue;
+                    }
+                    const newItem = {};
+                    const unit = {
+                        uomid: result["quote_details._uomid_value"], //GUID
+                        name: result["quote_details.uomid@OData.Community.Display.V1.FormattedValue"]
+                    };
+
+                    newItem.guid = result["quote_details.quotedetailid"];
+                    newItem.name = result["quote_details.productname"]; //text
+                    newItem.quantity = result["quote_details.quantity"]; // Decimal
+                    newItem.defaultuomid = unit; // Lookup
+                    newItem.davinci_purchaseunitcost = result["quote_details.priceperunit"]; // Currency
+                    newItem.davinci_laborminperunit = result["quote_details.new_labourminperunit"]; //Decimal
+                    newItem.productid = result["quote_details.productid"]; // Lookup
+                    if(!hasLoaded){ existingLineItems.push(newItem); }
+                    lineItems.push(newItem);
+                }
+                saveMetrics();
+                resolve(lineItems); // Resolve the promise with the lineItems
+            },
+            function(error) {
+                console.log(error.message);
+                reject(error); // Reject the promise with the error
+            }
+        );
+    });
 }
 
 // This function saves a quote to the Quote table, then upon success will 
@@ -528,25 +806,6 @@ function saveNewQuote(isTemplate){
         );   
 }
 
-//This function formats line item information to json to be used in deep insert
-function saveLineItemQuote(product, index){
-    //Initializing Quote line item details to be sent to dataverse
-    var row = $('#QuoteTable tbody tr').eq(index);    
-    var record = {};
-    record.msdyn_estimatedcost = Number(parseFloat(row.find('td:eq(8)').text()).toFixed(4)); // Currency
-    record.priceperunit = Number(parseFloat(product.davinci_purchaseunitcost).toFixed(4)); // Currency
-    record["productid@odata.bind"] = `/products(${product.productid})`; // Lookup
-    record.productname = product.name; // Text
-    record.msdyn_costtotal = Number(parseFloat(row.find('td:eq(9)').text()).toFixed(4)); // Currency
-    record.quantity = Number(product.quantity); // Decimal
-    record["uomid@odata.bind"] = `/uoms(${product.defaultuomid.uomid})`; // Lookup
-    record.msdyn_budgetamount = Number(parseFloat(row.find('td:eq(9)').text()).toFixed(4)); // Currency
-    record.new_labourminperunit = Number(parseFloat(product.davinci_laborminperunit).toFixed(4)); // Decimal
-    return record;
-}
-
-
-
 //function used during testing
 //Currently unused in implementation
 function deleteQuote(){
@@ -560,76 +819,3 @@ function deleteQuote(){
         }
     );
 }
-
-// Retrieves the quote passed from the mda along with all line items associated with it
-// Appends these lines items to the array of line items
-function getQuoteAPI(){
-    var fetchXml = `<fetch>
-                        <!-- Table -->
-                        <entity name="quote">
-                            <!-- Columns -->
-                            <attribute name="quoteid" />
-                            <attribute name="name" />
-                            <!-- Filter By -->
-                            <filter type="and">
-                                <condition attribute="revisionnumber" operator="eq" value="${QuoteInfo.revisionNumber}" />
-                                <condition attribute="quotenumber" operator="eq" value="${QuoteInfo.quoteNumber}" />
-                            </filter>
-                            <!-- One To Many Relationships -->
-                            <link-entity name="quotedetail" from="quoteid" to="quoteid" alias="quote_details" link-type="outer">
-                                <attribute name="productid" />
-                                <attribute name="productidname" />
-                                <attribute name="new_labourminperunit" />
-                                <attribute name="priceperunit" />
-                                <attribute name="productname" />
-                                <attribute name="quantity" />
-                                <attribute name="uomid" />
-                                <attribute name="uomidname" />
-                            </link-entity>
-                        </entity>
-                    </fetch>`;
-    
-    // using async stuff so that table is not populated before the retrieve is finished
-    return new Promise((resolve, reject) => {
-        parent.Xrm.WebApi.retrieveMultipleRecords("quote", `?fetchXml=${encodeURIComponent(fetchXml)}`).then(
-            function success(results) {
-                for (var i = 0; i < results.entities.length; i++) {
-                    var result = results.entities[i];
-                    // Columns
-                    QuoteId = result["quoteid"]; // Guid
-                    if($('#QuoteName').html() === 'New Quote'){
-                        $('#QuoteName').html(result.name);
-                    }
-                    // Formatting line items to be consistent with json objects made previously
-                        if(['Roof Estimate', 'Wall Estimate', 'Change Order'].includes(result["quote_details.productname"])) {
-                            continue;
-                        }
-                        const newItem = {};
-                        const unit = {
-                            uomid: result["quote_details._uomid_value"], //GUID
-                            name: result["quote_details.uomid@OData.Community.Display.V1.FormattedValue"]
-                        };
-                        newItem.name = result["quote_details.productname"]; //text
-                        newItem.quantity = result["quote_details.quantity"]; // Decimal
-                        newItem.defaultuomid = unit; // Lookup
-                        newItem.davinci_purchaseunitcost = result["quote_details.priceperunit"]; // Currency
-                        newItem.davinci_laborminperunit = result["quote_details.new_labourminperunit"]; //Decimal
-                        newItem.productid = result["quote_details._productid_value"]; // Lookup
-
-                        lineItems.push(newItem);
-                }
-                saveMetrics();
-                resolve(lineItems); // Resolve the promise with the lineItems
-            },
-            function(error) {
-                console.log(error.message);
-                reject(error); // Reject the promise with the error
-            }
-        );
-    });
-}
-//
-//
-// END OF FUNCTIONS
-//
-//
