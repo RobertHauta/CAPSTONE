@@ -2,10 +2,14 @@
 // START CODE EXECUTED ON LOAD
 //
 //
+$(window.parent).on("load", function() {
+     window.parent.document.title = "Quoting Tool";
+});
 
 //variable holding all line item json objects
 var lineItems = [];
 var existingLineItems = [];
+var customLineItems = [];
 var hasLoaded = true;
 //parameter to check when leaving a page to see if its redirecting or exiting the quote manager
 var redirect = false;
@@ -55,7 +59,7 @@ $('#TopButton').on("click", scrollToTop);
 
 /* When the user clicks on the button,
 toggle between hiding and showing the dropdown content */
-$('#dropbtn').on("click", function(e){
+$('.save-btn').on("click", function(e){
     $("#myDropdown").toggleClass("show");
 });
 
@@ -69,9 +73,16 @@ $('#QuoteName').on("dblclick", function(){
     });
 });
 
+$('#LineItmBtn').on("click", function(){
+    $('.PageDiv').toggleClass("LoadPage");
+    $('.LineItemForm').toggleClass("show");
+});
+
+$('#NewItemSave').click(addCustomLineItem);
+
 // Close the dropdown menu if the user clicks outside of it
 window.onclick = function(event) {
-  if(!event.target.matches('#dropbtn')) {
+  if(!event.target.matches('.save-btn')) {
     var dropdowns = $(".dropdown-content");
     var i;
     for (i = 0; i < dropdowns.length; i++) {
@@ -107,6 +118,7 @@ window.onclick = function(event) {
     $('#ProductButton').on("click", function(e){
         saveSession("existing", existingLineItems);
         saveSession("Items", lineItems);
+        saveSession("Custom", customLineItems);
         saveMetrics();
         redirect = true;
         window.location.href = "product_catalogue.html";
@@ -117,6 +129,7 @@ window.onclick = function(event) {
     $('#TemplateButton').on("click", function(e){
         saveSession("existing", existingLineItems);
         saveSession("Items", lineItems);
+        saveSession("Custom", customLineItems);
         saveMetrics();
         redirect = true;
         window.location.href = "template_page.html";
@@ -131,26 +144,11 @@ window.addEventListener('beforeunload', (event) => {
     }
 });
 
-//Gets the session item called Items 
+//Gets the session items 
 //fills line items with it's value if not empty
-{
-    var serialized_items = sessionStorage.getItem('Items');//Cookies.get('Items'); //getCookie("Items");
-    if (serialized_items) {
-        // Parse the serialized array back into an actual array
-        lineItems = JSON.parse(serialized_items);
-    } else {
-        console.log("No data found in storage.");
-    }
-}
-{
-    var serialized_items = sessionStorage.getItem('existing');//Cookies.get('Items'); //getCookie("Items");
-    if (serialized_items) {
-        // Parse the serialized array back into an actual array
-        existingLineItems = JSON.parse(serialized_items);
-    } else {
-        console.log("No data found in storage.");
-    }
-}
+lineItems = retrieveSession("Items");
+existingLineItems = retrieveSession("existing");
+customLineItems = retrieveSession("Customs");
 
 if(QuoteId === ''){
     getQuoteAPI().then( function(){
@@ -185,6 +183,17 @@ function saveSession(key, obj){
     sessionStorage.setItem(key, serialized_items); //= "Items=" + serialized_items + ";path=/";
 }
 
+function retrieveSession(key){
+    var serialized_items = sessionStorage.getItem(key);//Cookies.get('Items'); //getCookie("Items");
+    if (serialized_items) {
+        // Parse the serialized array back into an actual array
+        return JSON.parse(serialized_items);
+    } else {
+        return [];
+        //console.log("No data found in storage.");
+    }
+}
+
 function saveMetrics(){
     var metricsJSON = {
         Wage: $('#Wage').val(),
@@ -196,6 +205,56 @@ function saveMetrics(){
     };
     serialized = JSON.stringify(metricsJSON);
     sessionStorage.setItem('Metrics', serialized);
+}
+
+function errorAlert(msg){
+    Swal.fire({
+        title: 'Error',
+        text: `An Error Occured. ${msg} has no value. Please Try Again`,
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonText: 'Dismiss',
+    });
+}
+
+function addCustomLineItem(){
+    var record = {};
+    var errorString = ""
+    
+    $("#NewCat1").val() !== "" ? record.davinci_category1_newap = $("#NewCat1").val() : errorString += "Category 1;"; // Text
+    $("#NewCat2").val() !== "" ? record.davinci_category2_newap = $("#NewCat2").val() : errorString += "Category 2;"; // Text
+    $("#NewCat3").val() !== "" ? record.davinci_category3_newap = $("#NewCat3").val() : errorString += "Category 3;"; // Text
+    record["defaultuomid@odata.bind"] = "/uoms(af7be14e-551b-e911-a97a-000d3a11fc57)"; // Lookup
+    record.defaultuomid = {};
+    record.defaultuomid.name = "Roll";
+    record.defaultuomid.uomid = "af7be14e-551b-e911-a97a-000d3a11fc57";
+    $("#NewLaborMin").val() !== "" && Number($("#NewLaborMin").val()) >= 0 ? record.davinci_laborminperunit = $("#NewLaborMin").val() : errorString += "Labour Min/Unit;"; // Decimal
+    $("#NewName").val() !== "" ? record.name = $("#NewName").val() : errorString += "Product Name;"; // Text
+    $("#NewMake").val() !== "" ? record.davinci_make_newap = $("#NewMake").val() : errorString += "Make;"; // Text
+    $("#MinSelling").val() !== "" && Number($("#MinSelling").val()) > 0 ? record.davinci_minimumsellingquantity = $("#MinSelling").val() : errorString += "Minimum Selling Quantity;"; // Decimal
+    $("#NewCostUnit").val() !== "" && Number($("#NewCostUnit").val()) >= 0 ? record.davinci_purchaseunitcost = $("#NewCostUnit").val() : errorString += "Cost/Unit;"; // Decimal
+    if(errorString !== ""){
+        errorAlert(errorString);
+        return;
+    }
+    else{
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "Please ensure all values are correct as this action can not be reversed.",
+            icon: 'question', // Use 'question' for a question mark icon
+            showCancelButton: true,
+            confirmButtonText: 'Yes, proceed',
+            cancelButtonText: 'No, cancel'
+        }).then((result) => {
+            if(result.isConfirmed) { 
+                customLineItems.push(record);
+                lineItems.push(record);
+                $('.PageDiv').toggleClass("LoadPage");
+                $('.LineItemForm').toggleClass("show");
+                tableReCalc();
+            }
+        });
+    }
 }
 
 //Function to be called to dynamically update total values displayed at bottom of the screen
@@ -248,6 +307,7 @@ function businessLogic(row){
     const rowIndex = row; // Gets the row index (starts from 1)
     var curr_row = $('#QuoteTable tbody tr').eq(row);//quoteTable.rows[row];
     var min_unit = lineItems[row].davinci_minimumsellingquantity;
+    console.log(min_unit);
     var value = curr_row.find('td:eq(1) input[type="number"]').val();
     
     //Ensures quantity field is a multiple of the minimum selling quantity
@@ -354,6 +414,7 @@ for (let i = 0; i < lineItems.length; i++) {
             var rowIndex = $(event.target).closest('tr').index(); // Get the row index
 
             // Remove the item from lineItems and delete the row
+            customLineItems = customLineItems.filter(item => item.name !== lineItems[i].name);
             lineItems.splice(rowIndex, 1);
             $(this).closest('tr').remove();
 
@@ -495,9 +556,15 @@ function updateRequest(product, index){
     record.data.quantity = Number(product.quantity); // Decimal
     record.data.msdyn_budgetamount = Number(parseFloat(row.find('td:eq(9)').text()).toFixed(4)); // Currency
     record.data.new_labourminperunit = Number(parseFloat(product.davinci_laborminperunit).toFixed(4)); // Decimal
-
     
-    return record;
+    var request = {
+            etn: "quotedetail",
+            id: record.entityName,
+            payload: record.data,
+            getMetadata: function () { return { boundParameter: null, parameterTypes: {}, operationType: 2, operationName: "Update" }; }
+        };
+    
+    return request;
 }
 
 function createRequest(product, index){
@@ -517,8 +584,41 @@ function createRequest(product, index){
     record["uomid@odata.bind"] = `/uoms(${product.defaultuomid.uomid})`; // Lookup
     record.msdyn_budgetamount = Number(parseFloat(row.find('td:eq(9)').text()).toFixed(4)); // Currency
     record.new_labourminperunit = Number(parseFloat(product.davinci_laborminperunit).toFixed(4)); // Decimal
+    
+    var request = {
+            etn: "quotedetail",
+            payload: record,
+            getMetadata: function () { return { boundParameter: null, parameterTypes: {}, operationType: 2, operationName: "Create" }; }
+        };
+    
+    return request;
+}
 
-    return record;
+function quoteUpdate(isTemplate){
+    var totPrice = $('#FinalPrice').text();
+    var totalCost = $('#TotCost').text();
+    var totMat = $('#TotMat').text();
+    var totLabor = $("#TotLabor").text().substring(15);
+        
+    var record = {};
+    record.data = {};
+    record.entityName = `/quote(${QuoteId})`;
+    record.data.name = $('#QuoteName').html(); // Text
+    record.data.new_istemplate = isTemplate; // Boolean
+    record.data.msdyn_invoicesetuptotals = Number(parseFloat(totLabor));//Number((parseFloat(totPrice.substring(23)) - parseFloat(totMat.substring(17))).toFixed(4)); // Currency
+    record.data.msdyn_estimatedcost = Number(parseFloat(totalCost.substring(13)).toFixed(4)); // Currency
+    record.data.new_laborrate = Number($('#Wage').val()); // Decimal
+    record.data.new_profitmargin = Number($('#Profit\\%').val()); // Decimal
+    record.data.new_contingencymargin = Number($('#Contingency\\%').val()); // Decimal
+    record.data.new_overheadmargin = Number($('#Overhead\\%').val()); // Decimal
+    
+    var request = {
+            etn: "quote",
+            id: QuoteId,
+            payload: record.data,
+            getMetadata: function () { return { boundParameter: null, parameterTypes: {}, operationType: 2, operationName: "Update" }; }
+        };
+    return request;
 }
 
 //
@@ -530,75 +630,33 @@ function createRequest(product, index){
 function updateQuoteAPI(isTemplate){
     //disables page
     loadingCircle();
+    
+    saveCustomLineAPI().then(function(){
+    
+    var requests = [];
     var quoteRecords = [];
     var lineUpdateRecords = [];
     var lineCreateRecords = [];
     var lineDeleteRecords = [];
-    
-    {
-        var totPrice = $('#FinalPrice').text();
-        var totalCost = $('#TotCost').text();
-        var totMat = $('#TotMat').text();
-        
-        var record = {};
-        record.data = {};
-        record.entityName = `/quote(${QuoteId})`;
-        record.data.name = $('#QuoteName').html(); // Text
-        record.data.new_istemplate = isTemplate; // Boolean
-        record.data.msdyn_invoicesetuptotals = Number((parseFloat(totPrice.substring(23)) - parseFloat(totMat.substring(17))).toFixed(4)); // Currency
-        record.data.msdyn_estimatedcost = Number(parseFloat(totalCost.substring(13)).toFixed(4)); // Currency
-        record.data.new_laborrate = Number($('#Wage').val()); // Decimal
-        record.data.new_profitmargin = Number($('#Profit\\%').val()); // Decimal
-        record.data.new_contingencymargin = Number($('#Contingency\\%').val()); // Decimal
-        record.data.new_overheadmargin = Number($('#Overhead\\%').val()); // Decimal
 
-        quoteRecords.push(record);
-    }
+    requests.push(quoteUpdate(isTemplate));
+    
     
     //three cases - item is brand new - item is being updated - item is being removed
     var i = 0;
     lineItems.forEach((product) => {
-        if(existingLineItems.some(item => item["productid"] === product["productid"])){
-             lineUpdateRecords.push(updateRequest(product, i));
+        if(customLineItems.some(item => item.name.toLowerCase() === product.name.toLowerCase())) {;}
+        
+        else if(existingLineItems.some(item => item["productid"] === product["productid"])){
+             requests.push(updateRequest(product, i));
         }
         else{
-             lineCreateRecords.push(createRequest(product, i));
+             //lineCreateRecords.push(createRequest(product, i));
+             requests.push(createRequest(product, i));
         }
         i++;
     });
-    
-    var requests = [];
-    quoteRecords.forEach( (record) => {
-        
-        var request = {
-            etn: "quote",
-            id: QuoteId,
-            payload: record.data,
-            getMetadata: function () { return { boundParameter: null, parameterTypes: {}, operationType: 2, operationName: "Update" }; }
-        };
-
-        requests.push(request);
-    });
-    
-    lineUpdateRecords.forEach( (record) => {
-        var request = {
-            etn: "quotedetail",
-            id: record.entityName,
-            payload: record.data,
-            getMetadata: function () { return { boundParameter: null, parameterTypes: {}, operationType: 2, operationName: "Update" }; }
-        };
-        requests.push(request);
-    });
-    
-    lineCreateRecords.forEach( (record) => {
-        var request = {
-            etn: "quotedetail",
-            payload: record,
-            getMetadata: function () { return { boundParameter: null, parameterTypes: {}, operationType: 2, operationName: "Create" }; }
-        };
-
-        requests.push(request);
-    });
+    console.log(requests);
     existingLineItems.forEach( (product) => {
         if(!lineItems.some(item => item["productid"] === product["productid"])){
             var request = {
@@ -609,13 +667,13 @@ function updateQuoteAPI(isTemplate){
         }
     });
     
+    // Batched Call for all Updates Deletes and Creates related to saving quote so that 
+    // Less API calls used
     var allReq = [];
     allReq.push(requests);
     parent.Xrm.WebApi.online.executeMultiple(allReq).then(
         function (response) {
             loadingCircle();
-            console.log("Batch request completed successfully");
-            console.log(response);
             Swal.fire({
                     title: 'Success',
                     text: `${isTemplate ? "Template" : "Quote"} Saved`,
@@ -625,7 +683,6 @@ function updateQuoteAPI(isTemplate){
         },
         function (error) {
             loadingCircle();
-            console.error("Batch request failed", error);
             Swal.fire({
                     title: 'Error',
                     text: `An Error Occured. ${isTemplate ? "Template" : "Quote"} Could Not be Saved.`,
@@ -651,6 +708,11 @@ function updateQuoteAPI(isTemplate){
                 });
         }
     );
+    
+    }).catch(function(error){
+        loadingCircle();
+        console.log(error);
+    });
 }
 
 // Retrieves the quote passed from the mda along with all line items associated with it
@@ -682,6 +744,9 @@ function getQuoteAPI(){
                                 <attribute name="uomid" />
                                 <attribute name="uomidname" />
                                 <attribute name="quotedetailid" />
+                                <link-entity name="product" from="productid" to="productid" alias="productid" link-type="outer">
+                                    <attribute name="davinci_minimumsellingquantity" />
+                                </link-entity>
                             </link-entity>
                         </entity>
                     </fetch>`;
@@ -690,6 +755,7 @@ function getQuoteAPI(){
     return new Promise((resolve, reject) => {
         parent.Xrm.WebApi.retrieveMultipleRecords("quote", `?fetchXml=${encodeURIComponent(fetchXml)}`).then(
             function success(results) {
+                console.log(results);
                 for (var i = 0; i < results.entities.length; i++) {
                     var result = results.entities[i];
                     // Columns
@@ -720,6 +786,7 @@ function getQuoteAPI(){
                     newItem.davinci_purchaseunitcost = result["quote_details.priceperunit"]; // Currency
                     newItem.davinci_laborminperunit = result["quote_details.new_labourminperunit"]; //Decimal
                     newItem.productid = result["quote_details.productid"]; // Lookup
+                    newItem.davinci_minimumsellingquantity = result["productid.davinci_minimumsellingquantity"];
                     if(!hasLoaded){ existingLineItems.push(newItem); }
                     lineItems.push(newItem);
                 }
@@ -732,6 +799,77 @@ function getQuoteAPI(){
             }
         );
     });
+}
+
+function saveCustomLineAPI(){
+return new Promise((resolve, reject) => {
+    if(customLineItems.length === 0){ 
+        resolve("Empty");
+        return;
+    }
+    var createRequests = [];
+    var names = "";
+    var isFirst = true;
+    customLineItems.forEach((product) => {
+        isFirst ? names += `name eq '${product.name}'` : names += ` or name eq '${product.name}'`;
+        isFirst = false;
+        
+        var record = {};
+        record.davinci_category1_newap = product.davinci_category1_newap; // Text
+        record.davinci_category2_newap = product.davinci_category2_newap; // Text
+        record.davinci_category3_newap = product.davinci_category3_newap; // Text
+        record["defaultuomid@odata.bind"] = "/uoms(af7be14e-551b-e911-a97a-000d3a11fc57)"; // Lookup
+        record["defaultuomscheduleid@odata.bind"] = "/uomschedules(11684951-551b-e911-a986-000d3a11f5ee)"; // Lookup
+        record.davinci_laborminperunit = Number(parseFloat(product.davinci_laborminperunit)); // Decimal
+        record.name = product.name; // Text
+        record.davinci_make_newap = product.davinci_make_newap; // Text
+        record.davinci_minimumsellingquantity = Number(parseFloat(product.davinci_minimumsellingquantity)); // Decimal
+        record.davinci_purchaseunitcost = Number(parseFloat(product.davinci_purchaseunitcost)); // Decimal
+        record.new_sku = product.name; // Text
+        record.statecode = 0; // State
+        //record.davinci_ourproductcode = product.name; // Text
+
+        var createRequest = {
+            etn: "product",
+            payload: record,
+            getMetadata: function () { return { boundParameter: null, parameterTypes: {}, operationType: 2, operationName: "Create" }; }
+        };
+        createRequests.push(createRequest);
+    });
+    
+    var allReq = [];
+    allReq.push(createRequests);
+    parent.Xrm.WebApi.online.executeMultiple(allReq).then(
+        function (response) {
+            console.log(response);
+            
+            parent.Xrm.WebApi.retrieveMultipleRecords("product", `?$select=productid,name&$filter=(${names})`).then(
+            function success(results) {
+                console.log(results);
+                for (var i = 0; i < results.entities.length; i++) {
+                    var result = results.entities[i];
+                    // Columns
+                    const match = lineItems.find(item => item.name === result["name"]);
+                    if (match) {
+                        match.productid = result["productid"]; // Set the value from array1 to array2
+                    }
+                }
+                console.log(lineItems);
+                customLineItems.length = 0;
+                resolve(customLineItems);
+            },
+            function(error) {
+                console.log(error.message + "mememememememe");
+                reject(error);
+            });
+            
+                },
+        function (error) {
+            console.log(error + "aaaaaaaaaaaaaa");
+            reject(error);
+        }
+    );
+});    
 }
 
 // This function saves a quote to the Quote table, then upon success will 
