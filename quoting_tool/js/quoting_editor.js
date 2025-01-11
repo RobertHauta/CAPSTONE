@@ -2,22 +2,27 @@
 // START CODE EXECUTED ON LOAD
 //
 //
-$(window.parent).on("load", function() {
-     window.parent.document.title = "Quoting Tool";
+
+$(document).ready(function() {
+    parent.document.title = "Epic Roofing Quoting Tool";
 });
 
 //variable holding all line item json objects
 var lineItems = [];
 var existingLineItems = [];
 var customLineItems = [];
+var units = [];
 var hasLoaded = true;
 //parameter to check when leaving a page to see if its redirecting or exiting the quote manager
 var redirect = false;
 //Test Values will be dynamic in future
 var QuoteId = "";
-
+var LaborId = "";
 var OpportunityId = "1bbcf3ef-e330-40ce-af4c-ed541dbe4c0f" //Testing Value will be integrated later
 var QuoteInfo = {};
+
+$(window).on("load", function() {
+
 {
     const serialized = sessionStorage.getItem("ID");
     QuoteInfo = JSON.parse(serialized);
@@ -59,7 +64,7 @@ $('#TopButton').on("click", scrollToTop);
 
 /* When the user clicks on the button,
 toggle between hiding and showing the dropdown content */
-$('.save-btn').on("click", function(e){
+$('#SaveButton').on("click", function(e){
     $("#myDropdown").toggleClass("show");
 });
 
@@ -79,10 +84,11 @@ $('#LineItmBtn').on("click", function(){
 });
 
 $('#NewItemSave').click(addCustomLineItem);
+$('#NewItemCancel').click(leaveCustomForm);
 
 // Close the dropdown menu if the user clicks outside of it
 window.onclick = function(event) {
-  if(!event.target.matches('.save-btn')) {
+  if(!event.target.matches('#SaveButton')) {
     var dropdowns = $(".dropdown-content");
     var i;
     for (i = 0; i < dropdowns.length; i++) {
@@ -108,6 +114,7 @@ window.onclick = function(event) {
         $('#Profit\\%').val(metrics.Prof);
         QuoteId = metrics.Quote;
         $('#QuoteName').html(metrics.Name);
+        LaborId = metrics.Labor;
     }
 
 }
@@ -119,6 +126,7 @@ window.onclick = function(event) {
         saveSession("existing", existingLineItems);
         saveSession("Items", lineItems);
         saveSession("Custom", customLineItems);
+        saveSession("Units", units);
         saveMetrics();
         redirect = true;
         window.location.href = "product_catalogue.html";
@@ -130,6 +138,7 @@ window.onclick = function(event) {
         saveSession("existing", existingLineItems);
         saveSession("Items", lineItems);
         saveSession("Custom", customLineItems);
+        saveSession("Units", units);
         saveMetrics();
         redirect = true;
         window.location.href = "template_page.html";
@@ -149,6 +158,14 @@ window.addEventListener('beforeunload', (event) => {
 lineItems = retrieveSession("Items");
 existingLineItems = retrieveSession("existing");
 customLineItems = retrieveSession("Customs");
+units = retrieveSession("Units");
+if(units.length === 0){
+    getUnitsAPI().then(function(){
+        populateUnitDropdown();
+    }).catch(function(error){
+        console.log(error);
+    });
+}
 
 if(QuoteId === ''){
     getQuoteAPI().then( function(){
@@ -160,8 +177,7 @@ if(QuoteId === ''){
 else{
     tableReCalc();
 }
-
-
+});
 //
 //
 // END OF CODE EXECUTED WHEN LOADED IN
@@ -190,7 +206,6 @@ function retrieveSession(key){
         return JSON.parse(serialized_items);
     } else {
         return [];
-        //console.log("No data found in storage.");
     }
 }
 
@@ -201,7 +216,8 @@ function saveMetrics(){
         Over: $('#Overhead\\%').val(),
         Prof: $('#Profit\\%').val(),
         Quote: QuoteId,
-        Name: $('#QuoteName').html()
+        Name: $('#QuoteName').html(),
+        Labor: LaborId
     };
     serialized = JSON.stringify(metricsJSON);
     sessionStorage.setItem('Metrics', serialized);
@@ -217,21 +233,57 @@ function errorAlert(msg){
     });
 }
 
+function populateUnitDropdown(){
+    $('#NewUnit').empty();
+    const defaultopt = $('<option></option>').val("Unit").text("Unit");
+    $('#NewUnit').append(defaultopt);
+    units.sort().forEach(optionText => {
+        const option = $('<option></option>').val(optionText.name).text(optionText.name);
+        $('#NewUnit').append(option);
+    });
+}
+
+function leaveCustomForm(){
+    $("#NewCat1").val("");
+    $("#NewCat2").val(""); // Text
+    $("#NewCat3").val(""); // Text
+    
+    const selOption = $("#NewUnit").find(`option[value="Unit"]`);
+    selOption.prop('selected', true);
+
+    $("#NewLaborMin").val(0); // Decimal
+    $("#NewName").val(""); // Text
+    $("#NewMake").val(""); // Text
+    $("#MinSelling").val(0); // Decimal
+    $("#NewCostUnit").val(""); // Decimal
+    
+    $('.PageDiv').toggleClass("LoadPage");
+    $('.LineItemForm').toggleClass("show");
+}
+
 function addCustomLineItem(){
     var record = {};
     var errorString = ""
+    var unit = "";
     
     $("#NewCat1").val() !== "" ? record.davinci_category1_newap = $("#NewCat1").val() : errorString += "Category 1;"; // Text
     $("#NewCat2").val() !== "" ? record.davinci_category2_newap = $("#NewCat2").val() : errorString += "Category 2;"; // Text
     $("#NewCat3").val() !== "" ? record.davinci_category3_newap = $("#NewCat3").val() : errorString += "Category 3;"; // Text
     record["defaultuomid@odata.bind"] = "/uoms(af7be14e-551b-e911-a97a-000d3a11fc57)"; // Lookup
+    
+    $('#NewUnit').val() !== "Unit" ? unit = $('#NewUnit').val() : errorString += "Unit;";
     record.defaultuomid = {};
-    record.defaultuomid.name = "Roll";
-    record.defaultuomid.uomid = "af7be14e-551b-e911-a97a-000d3a11fc57";
+    const match = units.find(item => item.name === unit);
+    if (match) {
+        record.defaultuomid.name = unit;
+        record.defaultuomid.uomid = match["uomid"];
+        record.defaultuomid.scheduleid = match["uomscheduleid"];
+    }
+
     $("#NewLaborMin").val() !== "" && Number($("#NewLaborMin").val()) >= 0 ? record.davinci_laborminperunit = $("#NewLaborMin").val() : errorString += "Labour Min/Unit;"; // Decimal
     $("#NewName").val() !== "" ? record.name = $("#NewName").val() : errorString += "Product Name;"; // Text
     $("#NewMake").val() !== "" ? record.davinci_make_newap = $("#NewMake").val() : errorString += "Make;"; // Text
-    $("#MinSelling").val() !== "" && Number($("#MinSelling").val()) > 0 ? record.davinci_minimumsellingquantity = $("#MinSelling").val() : errorString += "Minimum Selling Quantity;"; // Decimal
+    $("#MinSelling").val() !== "" && Number($("#MinSelling").val()) > 0 && Number.isInteger(Number($("#MinSelling").val())) ? record.davinci_minimumsellingquantity = $("#MinSelling").val() : errorString += "Minimum Selling Quantity;"; // Decimal
     $("#NewCostUnit").val() !== "" && Number($("#NewCostUnit").val()) >= 0 ? record.davinci_purchaseunitcost = $("#NewCostUnit").val() : errorString += "Cost/Unit;"; // Decimal
     if(errorString !== ""){
         errorAlert(errorString);
@@ -249,8 +301,7 @@ function addCustomLineItem(){
             if(result.isConfirmed) { 
                 customLineItems.push(record);
                 lineItems.push(record);
-                $('.PageDiv').toggleClass("LoadPage");
-                $('.LineItemForm').toggleClass("show");
+                leaveCustomForm();
                 tableReCalc();
             }
         });
@@ -266,8 +317,8 @@ function calcTotalValues(){
     for(i=0; i < $('#QuoteTable tbody tr').length; i++){
         var curr_row = $('#QuoteTable tbody tr').eq(i);
         laborHours = parseFloat(laborHours) + parseFloat(curr_row.find('td').eq(6).text());
-        matCost = parseFloat(matCost) + parseFloat(curr_row.find('td').eq(4).text());
-        laborCost = laborCost + parseFloat(curr_row.find('td').eq(7).text());
+        matCost = parseFloat(matCost) + parseFloat(curr_row.find('td').eq(4).text().substring(1).replace(/,/g, ""));
+        laborCost = laborCost + parseFloat(curr_row.find('td').eq(7).text().substring(1).replace(/,/g, ""));
     }
     
     // Business logic calculations 
@@ -278,18 +329,20 @@ function calcTotalValues(){
     var contingencyCost = parseFloat(totalCost) * (parseFloat($('#Contingency\\%').val())/100);
     var overheadCost = parseFloat(totalCost) * (parseFloat($('#Overhead\\%').val())/100);
     var profitCost = parseFloat(totalSell) - (parseFloat(totalCost) + parseFloat(contingencyCost) + parseFloat(overheadCost));
+    var gst = parseFloat(totalSell) * 0.05;
     
     //Sets corresponding field with the new updated values
-    $('#LabHours').html("Labour Hours: " + laborHours.toFixed(3));
-    $('#TotMat').html("Total Material: $" + matCost.toFixed(2));
-    $('#TotLabor').html("Total Labour: $" + laborCost.toFixed(2));
-    $('#TotCost').html("Total Cost: $" + totalCost.toFixed(2));
-    $('#FinalPrice').html("Total Estimate Price: $" + totalSell.toFixed(2));
+    $('#LabHours').html("Labour Hours: " + Number(laborHours.toFixed(3)).toLocaleString('en-US'));
+    $('#TotMat').html("Total Material: $" + Number(matCost.toFixed(2)).toLocaleString('en-US'));
+    $('#TotLabor').html("Total Labour: $" + Number(laborCost.toFixed(2)).toLocaleString('en-US'));
+    $('#TotCost').html("Total Cost: $" + Number(totalCost.toFixed(2)).toLocaleString('en-US'));
+    $('#FinalPrice').html("Total Estimate Price: $" + Number(totalSell.toFixed(2)).toLocaleString('en-US'));
     $('#Margin').html("Gross-Margin %: " + margin.toFixed(3));
     $('#Markup').html("Mark-up %: " + markup.toFixed(3));
-    $('#Over\\$').html("Overhead: $" + overheadCost.toFixed(2));
-    $('#Cont\\$').html("Contingency: $" + contingencyCost.toFixed(2));    
-    $('#Pro\\$').html("Profit: $" + profitCost.toFixed(2));
+    $('#Over\\$').html("Overhead: $" + Number(overheadCost.toFixed(2)).toLocaleString('en-US'));
+    $('#Cont\\$').html("Contingency: $" + Number(contingencyCost.toFixed(2)).toLocaleString('en-US'));    
+    $('#Pro\\$').html("Profit: $" + Number(profitCost.toFixed(2)).toLocaleString('en-US'));
+    $('#GST').html("GST: $" + Number(gst.toFixed(2)).toLocaleString('en-US'));
 }
 
 //Calls business logic for every row in the table
@@ -307,7 +360,6 @@ function businessLogic(row){
     const rowIndex = row; // Gets the row index (starts from 1)
     var curr_row = $('#QuoteTable tbody tr').eq(row);//quoteTable.rows[row];
     var min_unit = lineItems[row].davinci_minimumsellingquantity;
-    console.log(min_unit);
     var value = curr_row.find('td:eq(1) input[type="number"]').val();
     
     //Ensures quantity field is a multiple of the minimum selling quantity
@@ -319,24 +371,24 @@ function businessLogic(row){
     //Calculate material cost and update that row/column
     var mat_cost = curr_row.find('td:eq(3) input[type="number"]').val();
     mat_cost = parseFloat(value) * parseFloat(mat_cost);
-    curr_row.find('td:eq(4)').html(mat_cost.toFixed(2));
+    curr_row.find('td:eq(4)').html("$" + Number(mat_cost.toFixed(2)).toLocaleString('en-US'));
     
     //Calculate labor hours and update that row/column
     var min_per_unit = curr_row.find('td:eq(5) input[type="number"]').val();
     labor_hours = parseFloat(value) * parseFloat(min_per_unit) / 60.0;
-    curr_row.find('td:eq(6)').html(labor_hours.toFixed(3));
+    curr_row.find('td:eq(6)').html(Number(labor_hours.toFixed(3)).toLocaleString('en-US'));
     
     //Calculate labor cost and update that row/column
     var labor_cost = parseFloat(labor_hours) * parseFloat($('#Wage').val());
-    curr_row.find('td:eq(7)').html(labor_cost.toFixed(2));
+    curr_row.find('td:eq(7)').html("$" + Number(labor_cost.toFixed(2)).toLocaleString('en-US'));
     
     //Calculate total cost and update to that row/column
     var total_cost = parseFloat(labor_cost) + parseFloat(mat_cost);
-    curr_row.find('td:eq(8)').html(total_cost.toFixed(2));
+    curr_row.find('td:eq(8)').html("$" + Number(total_cost.toFixed(2)).toLocaleString('en-US'));
     
     //Calculate sell cost and update to that row/column
     var sell_cost = parseFloat(total_cost) * (1 + ((parseFloat($('#Contingency\\%').val()) + parseFloat($('#Overhead\\%').val()))/100.0)) * (1 + (parseFloat($('#Profit\\%').val())/100.0));
-    curr_row.find('td:eq(9)').html(sell_cost.toFixed(2));
+    curr_row.find('td:eq(9)').html("$" + Number(sell_cost.toFixed(2)).toLocaleString('en-US'));
 }
 
 // Populates table with line item values
@@ -467,7 +519,6 @@ function lineItemReCalc(event){
     
     //If user presses enter move selected field down one row for seamless movement
     else if(event.type === 'keypress' && (event.key === 'Enter') && rowInd != lineItems.length){
-        //console.log(columnInd);
         //$('#QuoteTable tbody tr').eq(rowInd).find(`td:eq(${columnInd}) input[type="number"]`).blur();
         $('#QuoteTable tbody tr').eq(rowInd + 1).find(`td:eq(${columnInd}) input[type="number"]`).select();
     }
@@ -497,7 +548,7 @@ function lineItemReCalc(event){
 }
 
 function saveTemplate(){
-    saveNewQuote(true);
+    updateQuoteAPI(true);
 }
 
 function saveQuote(){
@@ -533,15 +584,16 @@ function saveLineItemQuote(product, index){
     //Initializing Quote line item details to be sent to dataverse
     var row = $('#QuoteTable tbody tr').eq(index);    
     var record = {};
-    record.msdyn_estimatedcost = Number(parseFloat(row.find('td:eq(8)').text()).toFixed(4)); // Currency
+    record.msdyn_estimatedcost = Number(parseFloat(row.find('td:eq(8)').text().substring(1).replace(/,/g, "")).toFixed(4)); // Currency
     record.priceperunit = Number(parseFloat(product.davinci_purchaseunitcost).toFixed(4)); // Currency
     record["productid@odata.bind"] = `/products(${product.productid})`; // Lookup
     record.productname = product.name; // Text
-    record.msdyn_costtotal = Number(parseFloat(row.find('td:eq(9)').text()).toFixed(4)); // Currency
+    record.msdyn_costtotal = Number(parseFloat(row.find('td:eq(9)').text().substring(1).replace(/,/g, "")).toFixed(4)); // Currency
     record.quantity = Number(product.quantity); // Decimal
     record["uomid@odata.bind"] = `/uoms(${product.defaultuomid.uomid})`; // Lookup
-    record.msdyn_budgetamount = Number(parseFloat(row.find('td:eq(9)').text()).toFixed(4)); // Currency
+    record.msdyn_budgetamount = Number(parseFloat(row.find('td:eq(9)').text().substring(1).replace(/,/g, "")).toFixed(4)); // Currency
     record.new_labourminperunit = Number(parseFloat(product.davinci_laborminperunit).toFixed(4)); // Decimal
+    console.log(record);
     return record;
 }
 
@@ -594,6 +646,63 @@ function createRequest(product, index){
     return request;
 }
 
+function updateLaborRequest(){
+    var totLabor = parseFloat($("#TotLabor").text().substring(15).replace(/,/g, ""));
+    var margin = parseFloat($("#Margin").text().substring(16));
+    var LaborPlus = Number(totLabor) * (1 + (Number(margin)/100));
+    
+    const record = {};
+
+    // Fields to populate in the new record
+    record.priceperunit = Number(totLabor.toFixed(2)); // Currency
+    record.msdyn_estimatedcost = Number(totLabor.toFixed(4)); // Currency
+    record.productname = "Labour Costs"; // Text
+    record.msdyn_costtotal = Number(LaborPlus.toFixed(2)); // Currency
+    record.quantity = 1; // Decimal
+    record.producttypecode = 5; // Choice
+    record.extendedamount = Number(totLabor.toFixed(4));
+    record.msdyn_budgetamount = Number(totLabor.toFixed(2)); // Currency
+    
+    var request = {
+            etn: "quotedetail",
+            id: LaborId,
+            payload: record,
+            getMetadata: function () { return { boundParameter: null, parameterTypes: {}, operationType: 2, operationName: "Update" }; }
+        };
+    
+    return request;
+}
+
+function createLaborRequest(){
+    //var row = $('#QuoteTable tbody tr').eq(index); 
+    var totLabor = parseFloat($("#TotLabor").text().substring(15).replace(/,/g, ""));
+    var margin = parseFloat($("#Margin").text().substring(16));
+    var LaborPlus = Number(totLabor) * (1 + (Number(margin)/100));
+    const record = {};
+    
+    // Lookup field for the related quote
+    record["quoteid@odata.bind"] = `/quotes(${QuoteId})`;
+
+    // Fields to populate in the new record
+    record.priceperunit = Number(totLabor.toFixed(2)); // Currency
+    record.msdyn_estimatedcost = Number(totLabor.toFixed(4)); // Currency
+    record.productname = "Labour Costs"; // Text
+    record.msdyn_costtotal = Number(LaborPlus.toFixed(2)); // Currency
+    record.quantity = 1; // Decimal
+    record.producttypecode = 5; // Choice
+    record.extendedamount = Number(totLabor.toFixed(4));
+    record.msdyn_budgetamount = Number(totLabor.toFixed(2)); // Currency
+    record.quotedetailname = "Labour Costs";
+    
+    var request = {
+            etn: "quotedetail",
+            payload: record,
+            getMetadata: function () { return { boundParameter: null, parameterTypes: {}, operationType: 2, operationName: "Create" }; }
+        };
+    
+    return request;
+}
+
 function quoteUpdate(isTemplate){
     var totPrice = $('#FinalPrice').text();
     var totalCost = $('#TotCost').text();
@@ -605,8 +714,8 @@ function quoteUpdate(isTemplate){
     record.entityName = `/quote(${QuoteId})`;
     record.data.name = $('#QuoteName').html(); // Text
     record.data.new_istemplate = isTemplate; // Boolean
-    record.data.msdyn_invoicesetuptotals = Number(parseFloat(totLabor));//Number((parseFloat(totPrice.substring(23)) - parseFloat(totMat.substring(17))).toFixed(4)); // Currency
-    record.data.msdyn_estimatedcost = Number(parseFloat(totalCost.substring(13)).toFixed(4)); // Currency
+    record.data.msdyn_invoicesetuptotals = Number(parseFloat(totLabor.replace(/,/g, "")));//Number((parseFloat(totPrice.substring(23)) - parseFloat(totMat.substring(17))).toFixed(4)); // Currency
+    record.data.msdyn_estimatedcost = Number(parseFloat(totalCost.substring(13)).toFixed(4).replace(/,/g, "")); // Currency
     record.data.new_laborrate = Number($('#Wage').val()); // Decimal
     record.data.new_profitmargin = Number($('#Profit\\%').val()); // Decimal
     record.data.new_contingencymargin = Number($('#Contingency\\%').val()); // Decimal
@@ -630,6 +739,7 @@ function quoteUpdate(isTemplate){
 function updateQuoteAPI(isTemplate){
     //disables page
     loadingCircle();
+    console.log(lineItems);
     
     saveCustomLineAPI().then(function(){
     
@@ -641,11 +751,17 @@ function updateQuoteAPI(isTemplate){
 
     requests.push(quoteUpdate(isTemplate));
     
+    //
+    //Need to handle existing labor - Issue when labor is
+    //
+    LaborId === "" ? requests.push(createLaborRequest()) : requests.push(updateLaborRequest());
     
     //three cases - item is brand new - item is being updated - item is being removed
     var i = 0;
     lineItems.forEach((product) => {
         if(customLineItems.some(item => item.name.toLowerCase() === product.name.toLowerCase())) {;}
+        
+        //else if(product.name.toLowerCase() === "Labour Costs") { requests.push(updateLaborRequest()); }
         
         else if(existingLineItems.some(item => item["productid"] === product["productid"])){
              requests.push(updateRequest(product, i));
@@ -656,7 +772,6 @@ function updateQuoteAPI(isTemplate){
         }
         i++;
     });
-    console.log(requests);
     existingLineItems.forEach( (product) => {
         if(!lineItems.some(item => item["productid"] === product["productid"])){
             var request = {
@@ -669,6 +784,7 @@ function updateQuoteAPI(isTemplate){
     
     // Batched Call for all Updates Deletes and Creates related to saving quote so that 
     // Less API calls used
+    console.log("made it here");
     var allReq = [];
     allReq.push(requests);
     parent.Xrm.WebApi.online.executeMultiple(allReq).then(
@@ -679,6 +795,10 @@ function updateQuoteAPI(isTemplate){
                     text: `${isTemplate ? "Template" : "Quote"} Saved`,
                     icon: 'success',
                     confirmButtonText: 'Okay'
+                }).then((result) => {
+                    lineItems.forEach((product) => {existingLineItems.push(product)});
+                    LaborId === "" ? LaborId = response[1].headers._headers["Location"].match(/\((.*?)\)/)[1] :  null;
+                    console.log("LaborId: " + LaborId);
                 });
         },
         function (error) {
@@ -744,6 +864,7 @@ function getQuoteAPI(){
                                 <attribute name="uomid" />
                                 <attribute name="uomidname" />
                                 <attribute name="quotedetailid" />
+                                <attribute name="producttypecode" />
                                 <link-entity name="product" from="productid" to="productid" alias="productid" link-type="outer">
                                     <attribute name="davinci_minimumsellingquantity" />
                                 </link-entity>
@@ -755,7 +876,6 @@ function getQuoteAPI(){
     return new Promise((resolve, reject) => {
         parent.Xrm.WebApi.retrieveMultipleRecords("quote", `?fetchXml=${encodeURIComponent(fetchXml)}`).then(
             function success(results) {
-                console.log(results);
                 for (var i = 0; i < results.entities.length; i++) {
                     var result = results.entities[i];
                     // Columns
@@ -769,16 +889,19 @@ function getQuoteAPI(){
                         hasLoaded = false;
                     }
                     if(!result["quote_details.productname"]){ continue; }
+                    if(result["quote_details.productname"] === "Labour Costs"){ 
+                        LaborId = result["quote_details.quotedetailid"];
+                        continue;
+                    }
                     // Formatting line items to be consistent with json objects made previously
                     if(['Roof Estimate', 'Wall Estimate', 'Change Order'].includes(result["quote_details.productname"])) {
                         continue;
                     }
                     const newItem = {};
                     const unit = {
-                        uomid: result["quote_details._uomid_value"], //GUID
+                        uomid: result["quote_details.uomid"], //GUID
                         name: result["quote_details.uomid@OData.Community.Display.V1.FormattedValue"]
                     };
-
                     newItem.guid = result["quote_details.quotedetailid"];
                     newItem.name = result["quote_details.productname"]; //text
                     newItem.quantity = result["quote_details.quantity"]; // Decimal
@@ -787,6 +910,7 @@ function getQuoteAPI(){
                     newItem.davinci_laborminperunit = result["quote_details.new_labourminperunit"]; //Decimal
                     newItem.productid = result["quote_details.productid"]; // Lookup
                     newItem.davinci_minimumsellingquantity = result["productid.davinci_minimumsellingquantity"];
+                    newItem.producttypecode = result["quote_details.producttypecode"];
                     if(!hasLoaded){ existingLineItems.push(newItem); }
                     lineItems.push(newItem);
                 }
@@ -813,13 +937,12 @@ return new Promise((resolve, reject) => {
     customLineItems.forEach((product) => {
         isFirst ? names += `name eq '${product.name}'` : names += ` or name eq '${product.name}'`;
         isFirst = false;
-        
         var record = {};
         record.davinci_category1_newap = product.davinci_category1_newap; // Text
         record.davinci_category2_newap = product.davinci_category2_newap; // Text
         record.davinci_category3_newap = product.davinci_category3_newap; // Text
-        record["defaultuomid@odata.bind"] = "/uoms(af7be14e-551b-e911-a97a-000d3a11fc57)"; // Lookup
-        record["defaultuomscheduleid@odata.bind"] = "/uomschedules(11684951-551b-e911-a986-000d3a11f5ee)"; // Lookup
+        record["defaultuomid@odata.bind"] = `/uoms(${product.defaultuomid.uomid})`; // Lookup af7be14e-551b-e911-a97a-000d3a11fc57
+        record["defaultuomscheduleid@odata.bind"] = `/uomschedules(${product.defaultuomid.scheduleid})`; // Lookup 11684951-551b-e911-a986-000d3a11f5ee
         record.davinci_laborminperunit = Number(parseFloat(product.davinci_laborminperunit)); // Decimal
         record.name = product.name; // Text
         record.davinci_make_newap = product.davinci_make_newap; // Text
@@ -841,11 +964,18 @@ return new Promise((resolve, reject) => {
     allReq.push(createRequests);
     parent.Xrm.WebApi.online.executeMultiple(allReq).then(
         function (response) {
-            console.log(response);
-            
-            parent.Xrm.WebApi.retrieveMultipleRecords("product", `?$select=productid,name&$filter=(${names})`).then(
+            var i = 0;
+            createRequests.forEach((req) => {
+                const match = lineItems.find(item => item.name === req.payload.name);
+                if(match){
+                    match.productid = response[i].headers._headers["Location"].match(/\((.*?)\)/)[1];
+                }
+                i++;
+            });
+            customLineItems.length = 0;
+            resolve(customLineItems);
+            /*parent.Xrm.WebApi.retrieveMultipleRecords("product", `?$select=productid,name&$filter=(${names})`).then(
             function success(results) {
-                console.log(results);
                 for (var i = 0; i < results.entities.length; i++) {
                     var result = results.entities[i];
                     // Columns
@@ -854,18 +984,17 @@ return new Promise((resolve, reject) => {
                         match.productid = result["productid"]; // Set the value from array1 to array2
                     }
                 }
-                console.log(lineItems);
                 customLineItems.length = 0;
                 resolve(customLineItems);
             },
             function(error) {
-                console.log(error.message + "mememememememe");
+                console.log(error.message);
                 reject(error);
-            });
+            });*/
             
-                },
+        },
         function (error) {
-            console.log(error + "aaaaaaaaaaaaaa");
+            console.log(error);
             reject(error);
         }
     );
@@ -873,10 +1002,10 @@ return new Promise((resolve, reject) => {
 }
 
 // This function saves a quote to the Quote table, then upon success will 
-// call saveLineItemQuote() for every line item corresponding to the quote
 function saveNewQuote(isTemplate){
         //disables page
         loadingCircle();
+        saveCustomLineAPI();
         //retrieve some of the important metrics for a quote
         var totPrice = $('#FinalPrice').text();
         var totalCost = $('#TotCost').text();
@@ -884,11 +1013,11 @@ function saveNewQuote(isTemplate){
         var record = {};
         //formatting data so that it can be passed to xrm web api
         record.new_istemplate = isTemplate; // Boolean
-        record["customerid_account@odata.bind"] = "/accounts(542c89b8-6eeb-ec11-bb3e-000d3a1406c3)"; // Customer //put a 5 at front
+        record["customerid_account@odata.bind"] = "/accounts(542c89b8-6eeb-ec11-bb3e-000d3a1406c3)"; // Customer 
         record.name = $('#QuoteName').html(); // Text 
         record.statuscode = 1; // Status
-        record.msdyn_estimatedcost = Number(parseFloat(totalCost.substring(13)).toFixed(4)); // Currency
-        record.msdyn_invoicesetuptotals = Number((parseFloat(totPrice.substring(23)) - parseFloat(totMat.substring(17))).toFixed(4)); // Currency 
+        record.msdyn_estimatedcost = Number(parseFloat(totalCost.substring(13).replace(/,/g, "")).toFixed(4)); // Currency
+        record.msdyn_invoicesetuptotals = Number((parseFloat(totPrice.substring(23).replace(/,/g, "")) - parseFloat(totMat.substring(17).replace(/,/g, "")).toFixed(4))); // Currency 
         record["opportunityid@odata.bind"] = `/opportunities(${OpportunityId})`;
         record["pricelevelid@odata.bind"] = "/pricelevels(77beff8d-acfa-e611-811e-c4346bad9624)"; // Lookup -- General Sales PriceList
         record["quote_details"] = [];
@@ -900,11 +1029,9 @@ function saveNewQuote(isTemplate){
             i++;
         });
         
-        
         parent.Xrm.WebApi.createRecord("quote", record).then(
             function success(result) {
                 QuoteId = result.id;
-                console.log(QuoteId);
                 loadingCircle();
                 //Display a success notification to the user
                 Swal.fire({
@@ -944,13 +1071,35 @@ function saveNewQuote(isTemplate){
         );   
 }
 
+function getUnitsAPI(){
+return new Promise((resolve, reject) => {
+    parent.Xrm.WebApi.retrieveMultipleRecords("uom", "?$select=uomid,name,_uomscheduleid_value").then(
+        function success(results) {
+            for (var i = 0; i < results.entities.length; i++) {
+                var result = results.entities[i];
+                // Columns
+                record = {};
+                record.uomid = result["uomid"]; // Guid
+                record.name = result["name"]; // Text
+                record.uomscheduleid = result["_uomscheduleid_value"]; // Lookup
+                units.push(record);
+            }
+            resolve();
+        },
+        function(error) {
+            console.log(error.message);
+            reject(error);
+        }
+);
+});
+}
+
 //function used during testing
 //Currently unused in implementation
-function deleteQuote(){
+function deleteQuoteAPI(){
     parent.Xrm.WebApi.deleteRecord("quote", QuoteId).then(
         function success(result) {
             QuoteId = "";
-            console.log(result);
         },
         function(error) {
             console.log(error.message);
