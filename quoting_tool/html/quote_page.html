@@ -3,32 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Quoting Tool</title>
+    <link rel="stylesheet" href="../../lib/bootstrap.css">
     <link rel="stylesheet" href="../css/styles.css">
+    <script src="../../lib/JQuery/jquery_v3_7_1.js"></script>
+    <script src="../../lib/sweetalert2.js"></script>
+    <script src="../js/quote_editor_globalvars.js" charset="utf-8"></script>
+    <script src="../js/Query_Formatters.js"></script>
+    <script src="../js/XrmApi_DatabaseCalls.js"></script>
+    <script src="../js/Quote_TableOps.js"></script>
 </head>
 <body>
-     <h1>Quote Page</h1>
-     <button id="RefreshButton" type="button">Refresh</button>
-     <a href="./product_catalogue.html"><button class="btn btn-primary">Products</button></a>
+   <div class="PageDiv">
+   
+     <div class="PageTop">
+        <img class="EpicLogo" src="https://cdn.prod.website-files.com/60be4c4cf9fd9f61795a5135/60be8f6a4225b441148eeba5_Epic_Logo.svg" alt="Epic Logo">
+        <h1 id="QuoteName">New Quote</h1>
      
-     <h2>Labour Hours: x</h2>
-     <h2>Labour Cost: x</h2>
-     <h2>Material Cost: x</h2>
-     <h2>Total Estimate Price: x</h2>
-     
-     <div class="valueDisplay">
-         <h2 class="columns">Contingency %: <input type="number" placeholder="0"></h2>
-         <h2 class="columns">Overhead %: <input type="number" placeholder="0"></h2>
-         <h2 class="columns">Profit %: <input type="number" placeholder="0"></h2>
-     </div>
+        <!-- <h2>Hourly Wage: <input class="form-control" type="number" id="Wage" placeholder="45" min="0"></h2>
+        <h2>Hrs/Day: <input class="form-control" type="number" id="DayHrs" placeholder="9" min="0"></h2> -->
+        
+        <div class="input-group me-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text">Hourly Wage</span>
+          </div>
+          <input class="form-control" id="Wage" type="number" placeholder="45" min="0">
+        </div>
+        <div class="input-group">
+          <div class="input-group-prepend">
+            <span class="input-group-text">Hours/Day</span>
+          </div>
+          <input class="form-control" id="DayHrs" type="number" placeholder="8" min="0">
+        </div>
+        
+        <div class='MenuButtons'>
+             <div class="dropdown">
+                 <button class="btn btn-success dropdown-toggle" id="SaveButton" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-floppy" viewBox="0 0 16 16">
+                        <path d="M11 2H9v3h2z"/>
+                        <path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z"/>
+                    </svg> Save
+                 </button>
+                 <div class="dropdown-menu" id="DropdownButtons" aria-labelledby="dropdownMenuButton">
+                   <a class="dropdown-item" id="SaveQuote" href="#">Quote</a>
+                   <a class="dropdown-item" id="SaveTemplate" href="#">Template</a>
+                 </div>
+             </div>
+             
+             <button type="button" id="LineItmBtn" class="btn btn-primary">Add New Line-Item</button>
+             
+             <button type="button" id="ProductButton" class="btn btn-primary">Products</button>
+             <button type="button" id="TemplateButton" class="btn btn-primary">Templates</button>
+         </div>
+    </div>
 
-     <div class="valueDisplay">
-        <h2 class="columns">Gross-Margin %: x</h2>
-        <h2 class="columns">Mark-up %: x</h2>
-     </div>
-     
-     <table id="QuoteTable">
-      <thead>
+     <table id="QuoteTable" class="table table-striped table-bordered table-hover">
+      <thead class="table-dark">
         <tr>
           <th>Product</th>
           <th>Quantity</th>
@@ -40,12 +70,132 @@
           <th>Labour Total</th>
           <th>Total Cost</th>
           <th>Total Sell</th>
+          <th><button id="TopButton" class=" btn btn-primary" type="button">Top</button></th>
         </tr>
       </thead>
       <tbody>
       </tbody>
      </table>
-    <script src="../js/quoting_manager.js" charset="utf-8"></script>
+     
+     <div id="QuoteValuesFlex">
+         <div id="QuoteValuesGrid">
+             <h2 id="LabHours">Labour Hours: x</h2>
+            
+             <div class="ValueDisplay">
+                <h2 id="TotMat" class="columns">Total Material: x</h2>
+                <h2 id="TotLabor" class="columns">Total Labour: x</h2>
+                <h2 id="TotCost" class="columns">Total Cost: x</h2>
+             </div>
+             
+             <div class="ValueDisplay">
+                 <h2 class="columns" id="Cont$">Contingency: $x</h2>
+                 <h2 class="columns" id="Over$">Overhead: $x</h2>
+                 <h2 class="columns" id="Pro$">Profit: $x</h2>
+             </div>
+             
+             <div class="ValueDisplay">
+                 <h2 class="columns">Contingency:
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text" id="basic-addon1">%</span>
+                      </div>
+                      <input class="form-control" type="number" placeholder="0" id="Contingency%">
+                    </div>
+                 </h2>
+                 <h2 class="columns">Overhead:
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text" id="basic-addon1">%</span>
+                      </div>
+                      <input class="form-control" type="number" placeholder="0" id="Overhead%">
+                    </div>
+                 </h2>
+                 <h2 class="columns">Profit:
+                    <div class="input-group">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text" id="basic-addon1">%</span>
+                      </div>
+                      <input class="form-control" type="number" placeholder="0" id="Profit%">
+                    </div>
+                 </h2>
+             </div>
+
+             <div class="ValueDisplay">
+                <h1 id="FinalPrice" class="columns">Total Estimate Price: x</h1>
+                <h1 id="GST" class="columns">GST: $x</h1>
+                <h2 id="Margin" class="columns">Gross-Margin %: x</h2>
+                <h2 id="Markup" class="columns">Mark-up %: x</h2>
+             </div>
+         </div>
+     </div>
+     
+   </div>
+   <div class='center LineItemForm'>
+        <form>
+            <h2>New Line-Item</h2><br>
+            
+            <div class="FormLine">
+                <div class="mb-3 me-3">
+                    <label for='ProductName' class="form-label">Product Name:</label>
+                    <input id="NewName" class="form-control" type='text' placeholder="Product Name">
+                </div>
+                
+                <div class="mb-3 me-3">
+                    <label for='Unit' class="form-label">Unit:</label>
+                    <select id="NewUnit" class="form-select">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for='Make' class="form-label">Make:</label>
+                    <input id="NewMake" class="form-control" type='text' placeholder="Make">
+                </div>
+            </div>
+            
+            <div class="FormLine">
+                <div class="mb-3 me-3">
+                    <label for='Cat1' class="form-label">Category 1:</label>
+                    <input id="NewCat1" class="form-control" type='text' placeholder="Category 1">
+                </div>
+                
+                <div class="mb-3 me-3">
+                    <label for='Cat2' class="form-label">Category 2:</label>
+                    <input id="NewCat2" class="form-control" type='text' placeholder="Category 2">
+                </div>
+                
+                <div class="mb-3">
+                    <label for='Cat3' class="form-label">Category 3:</label>
+                    <input id="NewCat3" class="form-control" type='text' placeholder="Category 3">
+                </div>
+            </div>
+            
+            <div class="FormLine">
+                <div class="mb-3 me-3">
+                    <label for='CostUnit' class="form-label">Cost/Unit:</label>
+                    <input id="NewCostUnit" class="form-control" type='number' placeholder="0" min="0">
+                </div>
+                
+                <div class="mb-3 me-3">
+                    <label for='LabMinUnit' class="form-label">Labour Min/Unit:</label>
+                    <input id="NewLaborMin" class="form-control" type='number' placeholder="0" min="0">
+                </div>
+                
+                <div class="mb-3">
+                    <label for='MinQuant' class="form-label">Minimum Selling Quantity:</label>
+                    <input id="MinSelling" class="form-control" type='number' placeholder="0" min="0">
+                    <div class="form-text">Unit(s)</div>
+                </div>
+            </div>
+            
+            <button id="NewItemSave" type="button" class='btn btn-success'>Submit</button>
+            <button id="NewItemCancel" type="button" class='btn btn-danger'>Cancel</button>
+        </form>
+    </div>
+    <div class='center'><div class="loader"></div></div>
+   <script src="../js/quote_editor.js" charset="utf-8"></script>
 </body>
 
 </html>
