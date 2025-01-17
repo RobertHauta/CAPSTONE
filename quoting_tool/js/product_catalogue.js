@@ -35,7 +35,7 @@ $(window).on("load", function() {
         window.location.href = "template_page.html";
     });
 
-
+    $('#ExitButton').click(exitConfirmation);
 
     //Table header dropdowns for filtering
     $('#Make').on('change', filter);
@@ -55,9 +55,9 @@ $(window).on("load", function() {
 
     //When the window is closed delete the "Items" cookie
     $(window).on('beforeunload', (event) => {
-        if(!redirect){
-            sessionStorage.clear();
-        }
+        //if (!redirect || !(performance.navigation.type === 1)){
+          //  sessionStorage.clear();
+        //}
     });
 
     //Populate catalogue on open
@@ -75,6 +75,22 @@ $(window).on("load", function() {
 //
 //
 
+function exitConfirmation(){
+    Swal.fire({
+        title: 'Are You Sure You Want To Leave?',
+        html: "Any Unsaved Changes will be Lost",
+        icon: 'warning',
+        showCancelButton: true,
+        allowOutsideClick: false, // Prevents dismissing by clicking outside
+        confirmButtonText: 'Don\'t Leave',
+        cancelButtonText: 'Leave Anyways'
+    }).then((result) => {
+                    if (!result.isConfirmed) {
+                        parent.window.close();
+                    }
+    });
+}
+
 function retrieveSession(key){
     var serialized_items = sessionStorage.getItem(key);//Cookies.get('Items'); //getCookie("Items");
     if (serialized_items) {
@@ -91,8 +107,11 @@ function cataloguePopulatorAPI(tableName, queryString){
 parent.Xrm.WebApi.retrieveMultipleRecords(tableName, queryString).then(
     function success(result) {
         for(let i = 0; i < result.entities.length; i++){
+            result.entities[i].davinci_purchaseunitcost = result.entities[i].davinci_purchaseunitcost !== null ? result.entities[i].davinci_purchaseunitcost : 0;
+            result.entities[i].davinci_laborminperunit = result.entities[i].davinci_laborminperunit !== null ? result.entities[i].davinci_laborminperunit : 0;
             products.push(result.entities[i]);
          }
+         products.sort((a, b) => a.name.localeCompare(b.name));
         cataloguePopulatorArray(products);
     },
     function (error) {
@@ -128,15 +147,38 @@ function cataloguePopulatorArray(array) {
 
         // Check if item already exists in quoteLineItems
         if (quoteLineItems.some(q => q.name === item.name)) {
-            $cell8.html("<strong>Added</strong>");
+            const $button = $("<button>")
+                .addClass("btn btn-danger")
+                .text("- Quote")
+                .on("click", function () {
+                    const rowIndex = $(this).closest("tr").index();
+                    if($(this).hasClass('btn-secondary')){
+                        quoteLineItems.push(cur_results[array.length - rowIndex - 1]); 
+                        $(this).text("- Quote");
+                    }
+                    else{
+                        quoteLineItems = quoteLineItems.filter(line => line.name !== cur_results[array.length - rowIndex - 1].name);
+                        $(this).text("+ Quote");
+                    }
+                    $(this).toggleClass('btn-secondary btn-danger');
+                });
+
+            $cell8.append($button);
         } else {
             const $button = $("<button>")
                 .addClass("btn btn-secondary")
                 .text("+ Quote")
                 .on("click", function () {
                     const rowIndex = $(this).closest("tr").index();
-                    quoteLineItems.push(cur_results[array.length - rowIndex - 1]);
-                    $(this).parent().html("<strong>Added</strong>");
+                    if($(this).hasClass('btn-secondary')){
+                        quoteLineItems.push(cur_results[array.length - rowIndex - 1]); 
+                        $(this).text("- Quote");
+                    }
+                    else{
+                        quoteLineItems = quoteLineItems.filter(line => line.name !== cur_results[array.length - rowIndex - 1].name);
+                        $(this).text("+ Quote");
+                    }
+                    $(this).toggleClass('btn-secondary btn-danger');
                 });
 
             $cell8.append($button);
