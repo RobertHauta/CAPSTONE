@@ -1,5 +1,9 @@
 console.log("open");
-var windowOptions = "height=800,width=800";
+var windowOptions = {
+    height: 800,
+    width: 800,
+    menubar: "no"
+};//"height=800,width=800,menubar=no";
 var url = "new_/quoting_tool/html/quote_page.html";
 var formContext = Xrm.Page;
 getFormData(formContext);
@@ -11,7 +15,10 @@ if(formContext.data.getIsDirty()){
 }
 else{
     console.log("clean");
-    Xrm.Navigation.openWebResource(url);
+    Xrm.Navigation.openWebResource(url, windowOptions);
+    
+    
+    //window.open("../html/quote_page.html", "_blank", "location=yes,height=570,width=520,scrollbars=yes,status=yes,menubar=no");
     refreshPage();
 }
 
