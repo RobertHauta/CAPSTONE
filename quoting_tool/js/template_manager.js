@@ -29,6 +29,8 @@ var redirect = false;
     });
 }
 
+$('#ExitButton').click(exitConfirmation);
+
 $('#TopButton').on("click", scrollToTop);
 
 {
@@ -46,9 +48,9 @@ $('#TopButton').on("click", scrollToTop);
 
     //When the window is closed delete the "Items" cookie
     window.addEventListener('beforeunload', (event) => {
-        if (!redirect) {
-            sessionStorage.clear();
-        }
+        //if (!redirect || !(performance.navigation.type === 1)) {
+          //  sessionStorage.clear();
+        //}
     });
 }
 
@@ -62,6 +64,22 @@ function scrollToTop() {
 //
 //
 
+
+function exitConfirmation(){
+    Swal.fire({
+        title: 'Are You Sure You Want To Leave?',
+        html: "Any Unsaved Changes will be Lost",
+        icon: 'warning',
+        showCancelButton: true,
+        allowOutsideClick: false, // Prevents dismissing by clicking outside
+        confirmButtonText: 'Don\'t Leave',
+        cancelButtonText: 'Leave Anyways'
+    }).then((result) => {
+                    if (!result.isConfirmed) {
+                        parent.window.close();
+                    }
+    });
+}
 
 // FetchXML Testing Gone Wild
 
@@ -103,6 +121,7 @@ function populateTable() {
     console.log(lineItems);
     for (let i = 0; i < templateInfo.length; i++) {
         console.log(templateInfo[i]);
+        var templateAdded = true;
         // Create the parent row
         const parentRow = $(`<tr>`).appendTo($('#TemplateTable'));
         const uniqueId = templateInfo[i].name.replace(/\s+/g, "_"); // Create a unique ID from the name
@@ -120,32 +139,44 @@ function populateTable() {
         // Append cells to the parent row
         var button = document.createElement("button");
         button.addEventListener('click', function (event) { addItemToQuote(event, uniqueId, i) });
-
-        $('<td class="TemplateDropdown">').css({ 'grid-column': 'span 8', 'width': '100%' }).html(templateInfo[i].name).appendTo(parentRow);
-        $('<td>').html(button).addClass('exclude-toggle').appendTo(parentRow);
-
-        button.setAttribute('class', 'btn btn-secondary');
+        button.classList.add('btn', 'btn-secondary');
         button.innerHTML = "+ Quote";
+
+        $('<td class="TemplateDropdown">').attr('colspan', 8).html(templateInfo[i].name).appendTo(parentRow);
+        const addTempToQuote = $('<td>').html(button).addClass('exclude-toggle').appendTo(parentRow);
+
+        //addTempToQuote.html("+ Quote");
 
         // Create the hidden row
         for (let j = 1; j <= itemCount; j++) {
             const hiddenRow = $(`<tr id="hidden_row${uniqueId}${j}" class="hidden_row" style="display: none;">`).appendTo($('#TemplateTable'));
             $('<td>').html("").appendTo(hiddenRow);
-            $('<td>').css({ 'grid-column': 'span 1', 'width': '100%' }).html(templateInfo[i].quote_details[j - 1].name).appendTo(hiddenRow);
+            $('<td>').attr('colspan',1).html(templateInfo[i].quote_details[j - 1].name).appendTo(hiddenRow);
             $('<td>').html(templateInfo[i].quote_details[j - 1].defaultuomid.name).appendTo(hiddenRow);
             $('<td>').html("$" + templateInfo[i].quote_details[j - 1].davinci_purchaseunitcost).appendTo(hiddenRow);
             $('<td>').html(templateInfo[i].quote_details[j - 1].davinci_make_newap).appendTo(hiddenRow);
             $('<td>').html(templateInfo[i].quote_details[j - 1].davinci_category1_newap).appendTo(hiddenRow);
             $('<td>').html(templateInfo[i].quote_details[j - 1].davinci_category2_newap).appendTo(hiddenRow);
             $('<td>').html(templateInfo[i].quote_details[j - 1].davinci_category3_newap).appendTo(hiddenRow);
-            $('<td>').append(
-                $('<button>', {
-                    text: '+ Quote',
-                    class: 'btn btn-secondary',
-                    'data-unique-id': uniqueId,
-                    'data-row-index': j
-                }).click(function (event) { (addItemToQuote(event, uniqueId, j)) })
-            ).appendTo(hiddenRow);
+
+            if (lineItems.some(item => item.name === templateInfo[i].quote_details[j - 1].name)) {
+                $('<td>').html("<strong>Added</strong>").appendTo(hiddenRow);
+            } else {
+                templateAdded = false;
+                $('<td>').append(
+                    $('<button>', {
+                        text: '+ Quote',
+                        class: 'btn btn-secondary',
+                        'data-unique-id': uniqueId,
+                        'data-row-index': j
+                    }).click(function (event) { (addItemToQuote(event, uniqueId, j)) })
+                ).appendTo(hiddenRow);
+            }
+        }
+
+        if (templateAdded) {
+            addTempToQuote.html("<strong>Added</strong>");
+            addTempToQuote.disabled = true;
         }
     }
 }
@@ -160,6 +191,8 @@ function addItemToQuote(event, uniqueId, rowIndex) {
     // If the parent row was clicked, add all the child items to the quote
     if (isParentRow) {
         console.log("Template was selected");
+        //button.html = "<strong>Added</strong>";
+        button.disabled = true;
         const cell = button.closest('td');
         cell.html("<strong>Added</strong>");
 
@@ -181,6 +214,9 @@ function addItemToQuote(event, uniqueId, rowIndex) {
             }
             // Add the item to the quote
             lineItems.push(selectedItem);
+            
+            const hiddenRowButton = $(`#hidden_row${uniqueId}${j}`).find('button');
+            hiddenRowButton.replaceWith("<strong>Added</strong>");
             // Set the text of the button to "Added"
             //parentRow.find('td:eq(1)').html("<strong>Added</strong>");
         }
