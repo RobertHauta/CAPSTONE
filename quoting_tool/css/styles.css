@@ -15,6 +15,7 @@ body {
 
 
 /* Loading Screen */
+
 .center{
     position: absolute;
     top: 50%;
@@ -46,69 +47,35 @@ body {
 }
 
 /* Line Item Form */
+
 .LineItemForm{
     display: none;
-    border: 1px solid black;
     z-index: 1;
     background-color: #ebebed;
-    border-radius: 2%;
+    padding: 1.5rem;
+    border-radius: 0.375rem;
 }
-form{
-    padding: 15px;
+.FormLine{
+    display: flex;
 }
-label{
-    font-size: 1.5em;
+.FormLine input, .FormLine select{
+    min-width: 188px;
+    display: block;
 }
-
-form > h2{
-    margin: 0;
-}
-
-form input, form select{
-    width: 100%;
-}
-
 
 /* Page Tops */
-.valueDisplay{
-    display: inline-block;
-    width: fit-content;
-    height: fit-content;
-}
-.values{
-    display: inline-block;
-    float: right;
-}
 
-.columns{
-    display: block;
-    padding-bottom: 0;
-    margin-bottom: 0;
-}
-#GST, #Markup{
-    margin: 0;
-    padding-top: 0;
-}
-
-#quoteValuesGrid{
-    width: 90%;
-    display: grid;
-    grid-template-columns: 
-        minmax(235px, 1.5fr)
-        minmax(260px, 2fr)
-        minmax(235px, 2fr)
-        minmax(235px, 2fr)
-        minmax(310px, 2.5fr);
-}
-#quoteValuesFlex{
+#QuoteValuesFlex{
     display: flex;
     justify-content: center;
-    margin-bottom: 30px;
 }
 
-h1, h2{
-    padding: 15px;
-    display: inline-block;
+.list-group-item{
+    font-size: 1.1rem;
+}
+
+#GST, #FinalPrice{
+    font-size: 1.5rem;
 }
 
 .EpicLogo{
@@ -117,53 +84,67 @@ h1, h2{
     height: 75px;
 }
 
-
+.StickyFooter{
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
 
 /* Input Fields */
+
 #SearchBar {
-    display: inlie-block;
-    width: 50%;
-    padding: .375rem .75rem;
-    margin-left: 10%;
-    font-size: 1rem;
-    font-weight: 400;
-    line-height: 1.5;
-    color: var(--bs-body-color);
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-color: var(--bs-body-bg);
-    background-clip: padding-box;
-    border: solid black 1px;
-    border-radius: 10px;
-    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    field-sizing: fixed;
+    width: 100%;
 }
 
-#NameField{
-    width: 200px;
-    height: 75px;
-    font-size: 2em;
-}
-
+/* Removes arrows from number input fields */
 input[type="number"] {
-  -moz-appearance: textfield;
+    -moz-appearance: textfield;
 }
 input[type="number"]::-ms-clear {
-  display: none;
+    display: none;
 }
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 input{
     field-sizing: content;
-    background-color: #f0f0f0;
-    font-size: 1em;
 }
-tr:nth-child(even) input {
-    background: #f8f6ff;
+.form-control{
+    display: inline-block;
+    width: auto;
+}
+tr:nth-child(odd) input {
+    background: #f2f2f2;
+    border-width: 1px;
+}
+
+.input-group{
+    width: auto;
+}
+
+.input-group-text{
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group > .form-control{
+    flex: 0 0 auto;
+    width: auto;
+}
+
+.Filter {
+    border: none;
+    position: sticky;
+    top: 0;
+    background: #3d3935;
+    text-align: left;
+    font-weight: bold;
+    color: white;
+    cursor:pointer;
 }
 
 select{
@@ -172,176 +153,40 @@ select{
 }
 
 /* Buttons */
-.btn-primary {
-    color: #fff;
-    background-color: #007bff;
-    border-color: #007bff;
-    font-size: 2rem;
-    float: right;
-    margin: 40px 30px 0 0;
+
+.NavButton{
+    color: #e91d2d !important;
 }
-.btn-primary:active, .btn-primary:hover{
-    background-color: #0050a6;
+.NavButton:hover{
+    color: #3d3935 !important;
+    text-decoration: underline;
 }
 
-.btn-secondary {
-    color: #fff;
-    background-color: #6c757d;
-    border-color: #6c757d;
-}
-.btn-secondary:active, .btn-secondary:hover{
-    background-color: #a2adbd;
-}
-
-/* Save Button */
-.save-btn {
-    /*background-color: #3498DB;*/
-    background-color: #198754;
-    color: white;
-    padding: 9px 16px;
-    font-size: 16px;
-    border: none;
-    cursor: pointer;
-    border-radius: .25rem;
-}
-.save-btn:hover, .save-btn:focus{
-    background-color: #157046;
-}
-/* The container <div> - needed to position the dropdown content */
-.dropdown {
-    margin: 40px 30px 0 0;
-    float: right;
-    position: relative;
-    display: inline-block;
-}
-/* Dropdown Content (Hidden by Default) */
-.dropdown-content {
-    display: none;
-    right: 0;
-    position: absolute;
-    background-color: #f1f1f1;
-    /*min-width: 160px;*/
-    width: fit-content;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 1;
-}
-/* Buttons inside the dropdown */
-.dropdown-content button {
-    color: black;
-    padding: 10px 16px;
-    text-decoration: none;
-    display: block;
-    float: right;
-    width: 103.156px;
-}
-.dropdown-content button:hover{
-    background-color: #2980B9;
-}
-
-.show{
-    display:block;
-}
-
-#SearchButton{
+.IconButton{
     height: 38px;
+    display: flex;
+    align-items: center;
 }
 
-.btn-deleting-line{
-    color: #fff;
-    background-color: #ff0000;
-    border-color: #6c757d;
-}
-.btn-deleting-line:active, .btn-deleting-line:hover{
-    background-color: #960000;
-}
-
-.btn {
-    display: inline-block;
-    font-weight: 400;
-    text-align: center;
-    white-space: nowrap;
-    vertical-align: middle;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    border: 1px solid transparent;
-    padding: .375rem .75rem;
-    font-size: 1rem;
-    line-height: 1.5;
-    border-radius: .25rem;
-    transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-    cursor:pointer;
-}
-
-#TopButton {
-    color: #fff;
-    background-color: #007bff;
-}
-#TopButton:active, #TopButton:hover{
-    background-color: #0050a6;
-}
-
-/* Tables */
+/* Tables 
 table {
     display: grid;
     border-collapse: collapse;
     min-width: 100%;
   
 }
-#ProductTable{
-    grid-template-columns: 
-        minmax(250px, 2.5fr)
-        minmax(100px, 1fr)
-        minmax(150px, 1fr)
-        minmax(100px, 1.5fr)
-        minmax(180px, 1.5fr)
-        minmax(180px, 1.5fr)
-        minmax(180px, 1.5fr)
-        minmax(110px, 110px);
-}
-#QuoteTable{
-    grid-template-columns: 
-        minmax(250px, 2.5fr)
-        minmax(100px, 0.5fr)
-        minmax(100px, 1fr)
-        minmax(150px, 1fr)
-        minmax(150px, 1fr)
-        minmax(120px, 1fr)
-        minmax(140px, 1fr)
-        minmax(140px, 1fr)
-        minmax(130px, 1fr)
-        minmax(130px, 1fr)
-        minmax(110px, 110px);
-}
-#TemplateTable{
-    grid-template-columns: 
-        minmax(250px, 1fr)
-        minmax(250px, 2.5fr)
-        minmax(100px, 1fr)
-        minmax(150px, 1fr)
-        minmax(260px, 1.5fr)
-        minmax(200px, 1.5fr)
-        minmax(225px, 1.5fr)
-        minmax(290px, 1.5fr)
-        minmax(125px, 125px);
-}
-
-
 thead,
 tbody,
 tr {
     display: contents;
 }
-
 th,
 td {
     padding: 15px;
     overflow: hidden;
     white-space: nowrap;
-    border-right: solid black 1px;
+    border-right: solid black 1px !important;
 }
-
 th {
     position: sticky;
     top: 0;
@@ -351,44 +196,43 @@ th {
     font-size: 1.1rem;
     color: white;
 }
-
-th:last-child {
-    border: 0;
-}
-
 td {
     padding-top: 10px;
     padding-bottom: 10px;
     text-overflow: ellipsis;
     color: #424242;
-}
-td:last-child{
-    border: 0;
-    text-overflow: clip;
-}
-tr:last-child td{
-    border-bottom: solid black 1px;
+} */
+
+th{
+    background-color: #3d3935 !important;
 }
 
-tr:nth-child(even) td {
-    background: #f8f6ff;
+.StickyHeader{
+    position: sticky;
+    top: 172px;
+    z-index: 1020;
+}
+
+td:last-child, th:last-child{
+    width: 105px;
+    text-overflow: clip;
+}
+
+.Scrollable{
+    overflow-y: scroll;
 }
 
 /* Other */
 
-.Filter {
-    border: none;
-    position: sticky;
-    top: 0;
-    background: #454545;
-    text-align: left;
-    font-weight: normal;
-    font-size: 1.1rem;
-    color: white;
-    cursor:pointer;
-}
-
 .TemplateDropdown:hover{
     text-decoration: underline;
     cursor: pointer;
+}
+
+.show{
+    display:block;
+}
+
+svg {
+  pointer-events: none;
 }
