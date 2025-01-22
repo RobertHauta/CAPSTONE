@@ -38,7 +38,7 @@ function calcTotalValues(){
     var gst = parseFloat(totalSell) * 0.05;
     
     //Sets corresponding field with the new updated values
-    $('#LabHours').html("Labour Hours: " + Number(laborHours.toFixed(3)).toLocaleString('en-US'));
+    $('#LabHours').html("Total Labour Hours: " + Number(laborHours.toFixed(3)).toLocaleString('en-US'));
     $('#TotMat').html("Total Material: $" + Number(matCost.toFixed(2)).toLocaleString('en-US'));
     $('#TotLabor').html("Total Labour: $" + Number(laborCost.toFixed(2)).toLocaleString('en-US'));
     $('#TotCost').html("Total Cost: $" + Number(totalCost.toFixed(2)).toLocaleString('en-US'));
@@ -126,7 +126,10 @@ for (let i = 0; i < lineItems.length; i++) {
         })
         .on('focus', (event) => { //highlight currently selected row for easier tracking of what user is doing
             const row = $(event.target).closest('tr');
-            row.find('td').css('background', '#2793db80');
+            if(!row.find('td').hasClass('table-danger')){
+                row.find('td').addClass('table-danger');
+            }
+            //row.find('td').css('background', '#2793db80');
         }).click(function(){
             $(this).select();
         })
@@ -154,7 +157,10 @@ for (let i = 0; i < lineItems.length; i++) {
             }).on("keypress blur keydown", (event) => { lineItemReCalc(event); })
             .on('focus', (event) => {
                 const row = $(event.target).closest('tr');
-                row.find('td').css('background', '#2793db80');
+                if(!row.find('td').hasClass('table-danger')){
+                    row.find('td').addClass('table-danger');
+                }
+                //row.find('td').css('background', '#2793db80');
             }).click(function(){
                 $(this).select();
             })
@@ -172,7 +178,10 @@ for (let i = 0; i < lineItems.length; i++) {
         }).on("keypress blur keydown", (event) => { lineItemReCalc(event); })
         .on('focus', (event) => {
             const row = $(event.target).closest('tr');
-            row.find('td').css('background', '#2793db80');
+            if(!row.find('td').hasClass('table-danger')){
+                row.find('td').addClass('table-danger');
+            }
+            //row.find('td').css('background', '#2793db80');
         }).click(function(){
             $(this).select();
         })
@@ -187,9 +196,12 @@ for (let i = 0; i < lineItems.length; i++) {
     // Create and append a delete button to the last cell
     $('<td>').append(
         $('<button>', {
-            text: '- Quote',
-            class: 'btn btn-danger'
-        }).on('click', function(event) {
+            class: 'btn btn-outline-danger IconButton'
+        }).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">" +
+            "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z\"/>" +
+            "<path d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z\"/>" +
+          "</svg>")
+        .on('click', function(event) {
             var rowIndex = $(event.target).closest('tr').index(); // Get the row index
 
             // Remove the item from lineItems and delete the row
@@ -253,7 +265,10 @@ function lineItemReCalc(event){
     //when deselecting the table change highlight back to normal to indicate row is not being modified anymore
     else if(event.type === 'blur') {
         const row = $(event.target).closest('tr');
-        row.find('td').css('background', rowInd % 2 == 1 ? '#fff' : '#00000000');
+        if(row.find('td').hasClass('table-danger')){
+            row.find('td').removeClass('table-danger');
+        }
+        //row.find('td').css('background', rowInd % 2 == 1 ? '#fff' : '#00000000');
     }
     
     else { return; };
@@ -268,6 +283,7 @@ function lineItemReCalc(event){
     lineItems[rowInd].quantity = row.find('td').eq(1).find('input[type="number"]').val();
     lineItems[rowInd].davinci_laborminperunit = row.find('td').eq(5).find('input[type="number"]').val();
     lineItems[rowInd].davinci_purchaseunitcost = row.find('td').eq(3).find('input[type="number"]').val();
+    lineItems[rowInd].isChanged = true;
     
     
     businessLogic(rowInd);
