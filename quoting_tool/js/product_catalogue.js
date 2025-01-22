@@ -34,6 +34,13 @@ $(window).on("load", function() {
         redirect = true;
         window.location.href = "template_page.html";
     });
+    
+    $('#TakeoffButton').on("click", function(e){
+        var serialized_items = JSON.stringify(quoteLineItems);
+        sessionStorage.setItem('Items', serialized_items);
+        redirect = true;
+        window.location.href = "takeoff_page.htm";
+    });
 
     $('#ExitButton').click(exitConfirmation);
 
@@ -42,6 +49,15 @@ $(window).on("load", function() {
     $('#Cat1').on('change', filter);
     $('#Cat2').on('change', filter);
     $('#Cat3').on('change', filter);
+    
+    //Button to clear all filters
+    $('#FilterButton').click(function(){
+        $('#Make').val($('#Make option:first').val());
+        $('#Cat1').val($('#Cat1 option:first').val());
+        $('#Cat2').val($('#Cat2 option:first').val());
+        $('#Cat3').val($('#Cat3 option:first').val());
+        filter();
+    });
 
     //Button to scroll back to top of page
     $('#TopButton').on("click", scrollToTop);
@@ -49,7 +65,7 @@ $(window).on("load", function() {
     quoteLineItems = retrieveSession("Items");
     console.log(quoteLineItems);
 
-    $('#SearchButton').on('click', filter);
+    //$('#SearchButton').on('click', filter);
     $('#SearchBar').on('keypress', (event) => {event.key === 'Enter' ? filter() : null;});
     $('#SearchBar').blur(filter);
 
@@ -148,37 +164,55 @@ function cataloguePopulatorArray(array) {
         // Check if item already exists in quoteLineItems
         if (quoteLineItems.some(q => q.name === item.name)) {
             const $button = $("<button>")
-                .addClass("btn btn-danger")
-                .text("- Quote")
+                .addClass("btn btn-outline-danger IconButton")
+                //.text("- Quote")
+                .html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">" +
+                  "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z\"/>" +
+                  "<path d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z\"/>" +
+                "</svg>")
                 .on("click", function () {
                     const rowIndex = $(this).closest("tr").index();
-                    if($(this).hasClass('btn-secondary')){
+                    if($(this).hasClass('btn-outline-secondary')){
                         quoteLineItems.push(cur_results[array.length - rowIndex - 1]); 
-                        $(this).text("- Quote");
+                        quoteLineItems[quoteLineItems.length - 1].isChanged = true;
+                        $(this).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">" +
+                          "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z\"/>" +
+                          "<path d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z\"/>" +
+                        "</svg>");
                     }
                     else{
                         quoteLineItems = quoteLineItems.filter(line => line.name !== cur_results[array.length - rowIndex - 1].name);
-                        $(this).text("+ Quote");
+                        $(this).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
+                          "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
+                        "</svg>");
                     }
-                    $(this).toggleClass('btn-secondary btn-danger');
+                    $(this).toggleClass('btn-outline-secondary btn-outline-danger');
                 });
 
             $cell8.append($button);
         } else {
             const $button = $("<button>")
-                .addClass("btn btn-secondary")
-                .text("+ Quote")
+                .addClass("btn btn-outline-secondary IconButton")
+                //.text("+ Quote")
+                .html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
+                  "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
+                "</svg>")
                 .on("click", function () {
                     const rowIndex = $(this).closest("tr").index();
-                    if($(this).hasClass('btn-secondary')){
+                    if($(this).hasClass('btn-outline-secondary')){
                         quoteLineItems.push(cur_results[array.length - rowIndex - 1]); 
-                        $(this).text("- Quote");
+                        $(this).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">" +
+                          "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z\"/>" +
+                          "<path d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z\"/>" +
+                        "</svg>");
                     }
                     else{
                         quoteLineItems = quoteLineItems.filter(line => line.name !== cur_results[array.length - rowIndex - 1].name);
-                        $(this).text("+ Quote");
+                        $(this).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
+                          "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
+                        "</svg>");
                     }
-                    $(this).toggleClass('btn-secondary btn-danger');
+                    $(this).toggleClass('btn-outline-secondary btn-outline-danger');
                 });
 
             $cell8.append($button);
@@ -234,7 +268,7 @@ function populateDropdowns(){
 
 //Scrolls back to top of page	
 function scrollToTop(){
-    $('html, body').animate({ scrollTop: 0 }, 1000); // 'slow' or duration in milliseconds
+    $(window).scrollTop(0);
 }
 
 // Filters catalogue based on categories selected and search bar contents
