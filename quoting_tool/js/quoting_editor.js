@@ -3,27 +3,46 @@
 //
 //
 
-//Delete these global variables after migration to multiple files is complete
-/*
-$(document).ready(function() {
-    parent.document.title = "Epic Roofing Quoting Tool";
-});
-
-//variable holding all line item json objects
-var lineItems = [];
-var existingLineItems = [];
-var customLineItems = [];
-var units = [];
-var hasLoaded = true;
-//parameter to check when leaving a page to see if its redirecting or exiting the quote manager
-var redirect = false;
-//Test Values will be dynamic in future
-var QuoteId = "";
-var LaborId = "";
-var OpportunityId = "1bbcf3ef-e330-40ce-af4c-ed541dbe4c0f" //Testing Value will be integrated later
-var QuoteInfo = {};*/
+/*$(document).on('click', function(event){
+    var elem = parent.document.documentElement;
+if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+  } else if (elem.webkitRequestFullscreen) {  //Safari 
+    elem.webkitRequestFullscreen();
+  } else if (elem.msRequestFullscreen) { // IE11 
+    elem.msRequestFullscreen();
+  }
+  
+});*/
 
 $(window).on("load", function() {
+
+/*PDFLib.PDFDocument.create().then(async (pdfDoc) => {
+    // Add a page to the PDF
+    const page = pdfDoc.addPage([600, 400]); // Dimensions: 600x400 points
+    const { width, height } = page.getSize();
+
+    // Draw text on the page
+    page.drawText('Hello, World!', {
+        x: 50, // X-coordinate
+        y: height - 100, // Y-coordinate
+        size: 24, // Font size
+        color: PDFLib.rgb(0, 0, 1), // Blue color
+    });
+
+    // Serialize the PDFDocument to bytes
+    const pdfBytes = await pdfDoc.save();
+
+    // Trigger download in the browser
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'example.pdf'; // File name
+    link.click();
+
+    console.log('PDF created and saved');
+});*/
+
 
 {
     const serialized = sessionStorage.getItem("ID");
@@ -31,12 +50,32 @@ $(window).on("load", function() {
     console.log(QuoteInfo);
 }
 
+//Resize table using current height values on load
+var headerHeight = $('.sticky-top').height();
+var footerHeight = $('#QuoteValuesFlex').height()
+$('.Scrollable').height(window.innerHeight - (headerHeight + footerHeight + 50));
+
+//Resize table using current height values on window resize
+$(window).resize(function(){
+    headerHeight = $('.sticky-top').height();
+    footerHeight = $('#QuoteValuesFlex').height()
+    $('.Scrollable').height(window.innerHeight - (headerHeight + footerHeight + 50));
+});
+
 $('#SearchBar').on("blur",searchBarHandler);
+$('#SearchBar').on("keypress",(event) => {event.key === 'Enter' ? searchBarHandler() : null;});
 
 $('#ExitButton').click(exitConfirmation);
 
 $('input').click(function(){
     $(this).select();
+});
+
+$("#QuoteTable").click(function(e){
+    console.log(e.target.parentElement.rowIndex);
+    var rows = $("#QuoteTable tbody tr");
+    var rowIndex = e.target.parentElement.rowIndex;
+    $(rows[rowIndex - 1]).toggleClass('table-danger');
 });
 
 //Labor Rate field at top of page
@@ -155,6 +194,21 @@ window.onclick = function(event) {
         saveMetrics();
         redirect = true;
         window.location.href = "template_page.html";
+    });
+}
+
+{
+    $('#TakeoffButton').on("click", function (e) {
+        var serialized_items = "";
+        console.log(lineItems[3]);
+        console.log(lineItems[2]);
+        if (!(lineItems.length === 0)) {
+            serialized_items = JSON.stringify(lineItems);
+        }
+        sessionStorage.setItem('Items', serialized_items); //= "Items=" + serialized_items + ";path=/";
+        redirect = true;
+
+        window.location.href = "takeoff_page.htm";
     });
 }
 
@@ -309,7 +363,7 @@ function addCustomLineItem(){
     var record = {};
     var errorString = ""
     var unit = "";
-    
+    record.isChanged = true;
     $("#NewCat1, #NewCat2, #NewCat3, #NewUnit, #NewLaborMin, #NewName, #NewMake, #MinSelling, #NewCostUnit").css('border-color', '#dee2e6');
     
     $("#NewCat1").val() !== "" ? record.davinci_category1_newap = $("#NewCat1").val() : (errorString += "Category 1;", $("#NewCat1").css('border-color', 'red')); // Text
@@ -359,13 +413,58 @@ function saveTemplate(){
 }
 
 function saveQuote(){
+    sanityCheck();
     //if this is a new quote
-    if(QuoteId === ""){
+    /*if(QuoteId === ""){
         saveNewQuote(false);
     }
     //if quote already exists then create new version
     else{
         updateQuoteAPI(false);
+    }*/
+}
+
+// This function checks for unusual input in the quote to ensure
+// user knows of any unusual things
+// If User chooses to continue then api call is invoked.
+function sanityCheck(){
+    var unusualQuantityLines = [];
+    var unusualPricesLines = [];
+    lineItems.forEach(item => {
+        if(Number(item.quantity) === 0){ unusualQuantityLines.push(item.name); }
+        else if(Number(item.davinci_purchaseunitcost) === 0 && Number(item.davinci_laborminperunit) === 0){
+            unusualPricesLines.push(item.name);
+        }
+    });
+    
+    var msg = "";
+    if(unusualQuantityLines.length !== 0){
+        msg = msg + `<p><strong>Quantity is 0 for one or more lines. Including:</strong>
+                       ${unusualQuantityLines[0]}</p>`;
+    }
+    if(unusualPricesLines.length !== 0){
+        msg = msg + `<p><strong>Material Costs and Labour Costs is 0 for one or more lines. Including:</strong>
+                       ${unusualPricesLines[0]}</p>`;
+    }
+    
+    if(msg.length !== 0){
+        var userContinue = true;
+        Swal.fire({
+            title: 'Sanity Check',
+            html: msg,
+            icon: 'warning', // Use 'question' for a question mark icon
+            showCancelButton: true,
+            allowOutsideClick: false, // Prevents dismissing by clicking outside
+            confirmButtonText: 'Cancel',
+            cancelButtonText: 'Continue Anyway'
+        }).then((result) => {
+            if(!result.isConfirmed) { 
+                updateQuoteAPI(false);
+            }
+        });
+    }
+    else{
+        updateQuoteAPI(false)
     }
 }
 
@@ -383,7 +482,7 @@ function loadingCircle(){
 
 //Scrolls back to top of page	
 function scrollToTop(){
-    $('html, body').animate({ scrollTop: 0 }, 1000); // 'slow' or duration in milliseconds
+    $('.Scrollable').animate({scrollTop: $('#QuoteTable').offset().top - $('.Scrollable').offset().top}, 1000);
 }
 
 function searchBarHandler(){
@@ -403,6 +502,8 @@ function searchBarHandler(){
         if(item.name.toLowerCase().includes(search.toLowerCase())){
             $("#QuoteTable tbody tr").eq(i).addClass("table-danger");
             highlightedLines.push(i);
+            $('.Scrollable').animate({scrollTop: $("#QuoteTable tbody tr").eq(i).offset().top - $('.Scrollable').offset().top}, 1000);
+            
         }
         else if($("#QuoteTable tbody tr").eq(i).hasClass("table-danger")){
             $("#QuoteTable tbody tr").eq(i).removeClass("table-danger");
