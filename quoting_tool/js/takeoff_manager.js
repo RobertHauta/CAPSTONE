@@ -12,7 +12,7 @@ var QuoteId = "";
 {
     $('#ProductButton').on("click", function (e) {
         redirect = true;
-
+        saveTakeOffSession();
         window.location.href = "product_catalogue.html";
     });
 
@@ -21,7 +21,7 @@ var QuoteId = "";
 {
     $('#QuoteButton').on("click", function (e) {
         redirect = true;
-
+        saveTakeOffSession();
         window.location.href = "quote_page.html";
     });
 }
@@ -29,17 +29,43 @@ var QuoteId = "";
 {
     $('#TemplateButton').on("click", function (e) {
         redirect = true;
-
+        saveTakeOffSession();
         window.location.href = "template_page.html";
     });
 }
 
 $('#ExitButton').click(exitConfirmation);
 
+$('#TakeOffName').on("dblclick", function(){
+    $(this).attr('contenteditable', 'true').focus();
+
+    $(this).on('blur', function () {
+        $(this).removeAttr('contenteditable');
+        takeoffs[0].name = $(this).text();
+    });
+});
+
 //
 //
 //
 //
+
+function retrieveSession(key){
+    var serialized_items = sessionStorage.getItem(key);//Cookies.get('Items'); //getCookie("Items");
+    if (serialized_items) {
+        // Parse the serialized array back into an actual array
+        return JSON.parse(serialized_items);
+    } else {
+        return [];
+    }
+}
+
+function saveTakeOffSession(){
+    var serialized = JSON.stringify(takeoffs);
+    var serialized2 = JSON.stringify(materialNames);
+    sessionStorage.setItem("TakeOff", serialized);
+    sessionStorage.setItem("Material", serialized2);
+}
 
 function exitConfirmation(){
     Swal.fire({
@@ -124,9 +150,25 @@ function buildFetchXml() {
     </fetch>`;
 }
 
+function makeNewTakeOff(){
+    var takeoff = {};
+    takeoff.name = "New Take Off";
+    takeoff.new_fieldwaste = 0;
+    takeoff.new_perimeterwaste = 0;
+    takeoff.new_remarks = "";
+    takeoff.new_takeoffid = "";
+    takeoff.new_typecountpairs = [];
+    takeoff.takeoff_details = [];
+    
+    takeoffs.push(takeoff);
+}
+
 function processResults(results) {
     takeoffs.length = 0;
     takeoffs = JSON.parse(JSON.stringify(results.entities.reduce(processRecord, [])));
+    if(takeoffs.length === 0){
+        makeNewTakeOff()
+    }
     populateTables();
 }
 
@@ -204,7 +246,10 @@ function handleError(error) {
 
 function populateMaterialHeaders(){
     materialNames.forEach(name => {
-        $('#Details thead tr').append(`<th>${name.name}</th>`);
+        var heads = $('#Details thead tr').children('th');
+        var secondLast = heads.length - 1;
+        
+        $('<th>').text(name.name).insertBefore(heads.eq(secondLast))
     });
 }
 
@@ -215,6 +260,14 @@ function createCheckBox(row, isChecked){
             checked: isChecked
         })
 
+    ).appendTo(row);
+}
+
+function createDeleteButton(row){
+    $('<td>').append(
+        $('<button>', {
+            text: 'Delete',
+        })
     ).appendTo(row);
 }
 
@@ -236,6 +289,8 @@ return new Promise((resolve, reject) => {
         
         var addedWaste = detail.new_measurement * (1 +(takeoffs[0].new_fieldwaste/100));
         $('<td>').html(addedWaste.toFixed(2)).appendTo(row);
+        
+        createDeleteButton(row);
     }
     resolve("Success!");
 });
@@ -247,6 +302,8 @@ function fillNewField(row){
     createNumberCell(row, 0);
     
     $('<td>').html(0).appendTo(row);
+    
+    createDeleteButton(row);
 }
 
 function fillNewRow(row){
@@ -255,6 +312,8 @@ function fillNewRow(row){
     materialNames.forEach((mat) => {
         createNumberCell(row, 0);
     });
+    
+    createDeleteButton(row);
 }
 
 function makeNewDetail(name, row){
@@ -280,6 +339,8 @@ function makeNewTypeCount(name, row){
     takeoffs[0].new_typecountpairs.push(typecount);
     
     createNumberCell(row, 0);
+    
+    createDeleteButton(row);
 }
 
 function contentEditableCell(row, rowFunc){
@@ -348,6 +409,8 @@ return new Promise ((resolve, reject) => {
             }
             !isNew ? createNumberCell(row, width) : null;
         });
+        
+        !isNew ? createDeleteButton(row) : null;
     resolve("Success!");
 });
 }
@@ -355,16 +418,18 @@ return new Promise ((resolve, reject) => {
 function calcTotalMat(name){
     let tots = {sum: 0, total: 0};
     takeoffs[0].takeoff_details.forEach(detail => {
+        const measure = detail.new_measurement;
         const match = detail.materials.find(mat => mat.new_materialtype === name.name);
         if(match){
-        	match.new_detailtype !== "Field" ? tots.sum += match.new_totaldimension : null;
+            let total = measure * match.new_quantity;
+        	match.new_detailtype !== "Field" ? tots.total += total : null;
                 
             //Make sure to calculate total before waste correctly based on type
             if(match.new_detailtype === "Perimeter"){
-                tots.total += match.new_totaldimension / (1+(takeoffs[0].new_perimeterwaste/100));
+                tots.sum += total * (1+(takeoffs[0].new_perimeterwaste/100));
              }
             else if(match.new_detailtype === "FieldInTotal"){
-                tots.total += match.new_totaldimension / (1+(takeoffs[0].new_fieldwaste/100));
+                tots.sum += total * (1+(takeoffs[0].new_fieldwaste/100));
             }
         }
     });
@@ -383,7 +448,7 @@ return new Promise((resolve, reject) => {
         
         $('<td>').html(tots.total.toFixed(2)).appendTo(row);
         
-        $('<td>').html(tots.sum).appendTo(row);
+        $('<td>').html(tots.sum.toFixed(2)).appendTo(row);
     });
     resolve("Success!");
 });
@@ -395,6 +460,8 @@ function addPenOpenRow(typecount, isNew){
     isNew ? contentEditableCell(row ,makeNewTypeCount) : $('<td>').html(typecount.type).appendTo(row);
       
     !isNew ? createNumberCell(row, typecount.count) : null;
+    
+    !isNew ? createDeleteButton(row) : null;
 }
 
 function populatePenOpenTable(){
@@ -427,6 +494,7 @@ function populateDetailsTable(){
 function populateTables(){
     $('#FieldWaste').val(Number(takeoffs[0].new_fieldwaste));
     $('#DetailWaste').val(Number(takeoffs[0].new_perimeterwaste));
+    $('#TakeOffName').text(takeoffs[0].name);
     
     populateMaterialHeaders();
     populateTotalMatTable();
@@ -512,6 +580,34 @@ function detailsEventHandler(event, isDetail){
     populateDetailsTable();
 }
 
+function addNewMatInputCheck(result){
+    if (result.isConfirmed) {
+        const newMaterial = {
+            name: result.value,
+            type: 'Perimeter'  // Types may no longer be required
+        };
+        materialNames.push(newMaterial);
+        
+        // Add new column header
+        var heads = $('#Details thead tr').children('th');
+        var secondLast = heads.length - 1;
+        
+        $('<th>').text(newMaterial.name).insertBefore(heads.eq(secondLast));
+        
+        $('#Detail tbody tr').each(() => {
+            const cells = $(this).children('td');
+            const lastCell = $(this).children('td');
+            
+            lastCell.detach();
+            createNumberCell($(this), 0);
+            lastCell.appendTo($(this));
+        });
+            
+        // Refresh the total material table
+        populateTotalMatTable();
+    }
+}
+
 function addNewMaterialButton() {
     Swal.fire({
         title: 'Add New Material',
@@ -526,31 +622,52 @@ function addNewMaterialButton() {
                 return 'This material already exists!'
             }
         }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const newMaterial = {
-                name: result.value,
-                type: 'Perimeter'  // You might want to ask for this or set a default
-            };
-            materialNames.push(newMaterial);
-            
-            // Add new column header
-            $('#Details thead tr').append(`<th>${newMaterial.name}</th>`);
-            
-            // Add new cell to each existing row
-            $('#Details tbody tr').each(function() {
-                createNumberCell($(this), 0);
-            });
-            
-            // Refresh the total material table
-            populateTotalMatTable();
-        }
-    });
+    }).then((result) => { addNewMatInputCheck(result) });
 }
 
-function addPenOpenButton(){
-    addPenOpenRow(null, true)
+function changeWasteHandler(){
+    takeoffs[0].new_fieldwaste = Number($('#FieldWaste').val());
+    takeoffs[0].new_perimeterwaste = Number($('#DetailWaste').val());
+    
+    populateDetailsTable();
+    populateTotalMatTable();
 }
+
+function deleteDetailButton(event){
+    const row = $(event.target).closest('tr');
+    
+    const detailName = row.find('td:eq(0)').text();
+    
+    //Removes detail
+    takeoffs[0].takeoff_details = JSON.parse(JSON.stringify(takeoffs[0].takeoff_details.filter(detail => detail.new_takeoffdetail1 !== detailName)));
+    
+    //populateDetailsTable();
+    row.remove();
+    populateTotalMatTable();
+}
+
+function deletePenOpenButton(event){
+    const row = $(event.target).closest('tr');
+    
+    const typeName = row.find('td:eq(0)').text();
+    
+    takeoffs[0].new_typecountpairs = JSON.parse(JSON.stringify(takeoffs[0].new_typecountpairs.filter(type => type.type !== typeName)));
+    
+    row.remove();
+    populatePenOpenTable();
+}
+
+function loadTakeOff(){
+    takeoffs = retrieveSession("TakeOff");
+    materialNames = retrieveSession("Material");
+    if(takeoffs.length === 0){
+        retrieveTakeOffAPI();
+    }
+    else{
+        populateTables();
+    }
+}
+
 //
 //
 //
@@ -561,6 +678,8 @@ $('#Details tbody').on('keypress', 'input', (event) => {
         detailsEventHandler(event, true);
     }
 });
+
+$('#Details tbody').on('click', 'button', (event) => deleteDetailButton(event));
 
 $('#Details tbody').on('blur', 'input', (event)=>{detailsEventHandler(event, true);});
 
@@ -581,6 +700,8 @@ $('#Fields tbody').on('blur', 'input', (event)=>{detailsEventHandler(event, fals
 
 $('#Fields tbody').on('change','checkbox', (event)=>{detailsEventHandler(event, false);});
 
+$('#Fields tbody').on('click', 'button', (event) => deleteDetailButton(event));
+
 $('#Fields tbody').on('focus', 'input', (event) => {
     const row = $(event.target).closest('tr');
     if(!row.find('td').hasClass('table-danger')){
@@ -589,6 +710,8 @@ $('#Fields tbody').on('focus', 'input', (event) => {
 });
 
 $('#PenOpen tbody').on('blur', 'input', (event)=>{penOpenEventHandler(event);});
+
+$('#PenOpen tbody').on('click', 'button', (event) => deletePenOpenButton(event));
 
 $('#PenOpen tbody').on('keypress', 'input', (event) => {
     if(event.key === "Enter"){
@@ -625,13 +748,6 @@ $('#FieldButton').click((event) => { addFieldRow(null, true)});
 
 $('#MaterialButton').click((event) => { addNewMaterialButton() });
 
+$('.waste-control').blur(changeWasteHandler);
 
-
-
-
-
-
-
-
-
-retrieveTakeOffAPI();
+loadTakeOff();
