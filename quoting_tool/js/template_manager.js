@@ -40,7 +40,7 @@ var redirect = false;
         sessionStorage.setItem('Items', serialized_items); //= "Items=" + serialized_items + ";path=/";
         redirect = true;
 
-        window.location.href = "takeoff_page.html";
+        window.location.href = "takeoff_page.htm";
     });
 }
 
@@ -57,9 +57,13 @@ $('#TopButton').on("click", scrollToTop);
         console.log("No data found in storage.");
     }
 
-    $('#SearchButton').on('click', searchBarHandler);
-    $('#SearchBar').on('keypress', (event) => { event.key === 'Enter' ? searchBarHandler() : null; });
-    $('#SearchBar').blur(searchBarHandler);
+    $('#SearchBar').on('blur', function(){
+        if($('#SearchBar').val() === ""){
+            searchBarHandler();
+        }
+    });
+    $('#SearchBar').on("keypress",(event) => {event.key === 'Enter' ? (searchBarHandler(), $('#SearchBar').blur()) : null;});
+    $('#SearchButton').click(searchBarHandler);
 
     //When the window is closed delete the "Items" cookie
     window.addEventListener('beforeunload', (event) => {
@@ -69,16 +73,16 @@ $('#TopButton').on("click", scrollToTop);
     });
 }
 
+//
+//
+//
+//
+
+
 //Scrolls back to top of page	
 function scrollToTop() {
-    $('html, body').animate({ scrollTop: 0 }, 1000); // 'slow' or duration in milliseconds
+    $(window).scrollTop(0);
 }
-
-//
-//
-//
-//
-
 
 function exitConfirmation(){
     Swal.fire({
@@ -88,7 +92,9 @@ function exitConfirmation(){
         showCancelButton: true,
         allowOutsideClick: false, // Prevents dismissing by clicking outside
         confirmButtonText: 'Don\'t Leave',
-        cancelButtonText: 'Leave Anyways'
+        cancelButtonText: 'Leave Anyways',
+        cancelButtonColor: "#3d3935",
+        confirmButtonColor: "#e91d2d"
     }).then((result) => {
                     if (!result.isConfirmed) {
                         parent.window.close();
@@ -138,7 +144,7 @@ function populateTable() {
         console.log(templateInfo[i]);
         var templateAdded = true;
         // Create the parent row
-        const parentRow = $(`<tr>`).appendTo($('#TemplateTable'));
+        const parentRow = $('<tr>').appendTo($('#TemplateTable'));
         const uniqueId = templateInfo[i].name.replace(/\s+/g, "_"); // Create a unique ID from the name
         const itemCount = templateInfo[i].quote_details.length;
         // Add onclick handler for the parent row
@@ -151,11 +157,13 @@ function populateTable() {
             }
         });
 
-        // Append cells to the parent row
-        var button = document.createElement("button");
-        button.addEventListener('click', function (event) { addItemToQuote(event, uniqueId, i) });
-        button.classList.add('btn', 'btn-secondary');
-        button.innerHTML = "+ Quote";
+        // Append cells to the parent row                       
+        var button = $('<button>', {
+            class: 'btn btn-outline-secondary IconButton'
+        }).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
+                    "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
+                "</svg>")
+        .click(function (event) { addItemToQuote(event, uniqueId, i) });
 
         $('<td class="TemplateDropdown">').attr('colspan', 8).html(templateInfo[i].name).appendTo(parentRow);
         const addTempToQuote = $('<td>').html(button).addClass('exclude-toggle').appendTo(parentRow);
@@ -180,7 +188,7 @@ function populateTable() {
                 templateAdded = false;
                 $('<td>').append(
                     $('<button>', {
-                        text: '+ Quote',
+                        text: '+',
                         class: 'btn btn-secondary',
                         'data-unique-id': uniqueId,
                         'data-row-index': j
@@ -229,6 +237,7 @@ function addItemToQuote(event, uniqueId, rowIndex) {
             }
             // Add the item to the quote
             lineItems.push(selectedItem);
+            lineItems[lineItems.length - 1].isChanged = true;
             
             const hiddenRowButton = $(`#hidden_row${uniqueId}${j}`).find('button');
             hiddenRowButton.replaceWith("<strong>Added</strong>");
@@ -256,6 +265,7 @@ function addItemToQuote(event, uniqueId, rowIndex) {
         }
         // Add the item to the quote
         lineItems.push(selectedItem);
+        lineItems[lineItems.length-1].isChanged = true;
         // Set the text of the button to "Added"
         //button.html("<strong>Added</strong>");
     }
