@@ -1,3 +1,10 @@
+
+//
+//
+// New detail names must be a combination of the takeoff and detail name!!! JS forced!!!
+// Database will not work otherwise
+//
+var deleted = []
 var lineItems = [];
 var takeoffs = [];
 var materialNames = [];
@@ -41,7 +48,10 @@ $('#TakeOffName').on("dblclick", function(){
 
     $(this).on('blur', function () {
         $(this).removeAttr('contenteditable');
+        var oldName = takeoffs[0].name;
         takeoffs[0].name = $(this).text();
+        takeoffs[0].changed = true;
+        updateNames(oldName);
     });
 });
 
@@ -49,6 +59,20 @@ $('#TakeOffName').on("dblclick", function(){
 //
 //
 //
+
+function updateNames(old){
+    let newStr = takeoffs[0].name;
+    takeoffs[0].takeoff_details.forEach(detail => {
+        detail.new_takeoffdetail1 = detail.new_takeoffdetail1.replaceAll(old, newStr);
+        detail.changed = true;
+        detail.materials.forEach(material => {
+            material.new_materialname = material.new_materialname.replaceAll(old, newStr);
+            material.changed = true;
+        });
+    });
+    populateDetailsTable();
+    populateTotalMatTable();
+}
 
 function retrieveSession(key){
     var serialized_items = sessionStorage.getItem(key);//Cookies.get('Items'); //getCookie("Items");
@@ -63,8 +87,10 @@ function retrieveSession(key){
 function saveTakeOffSession(){
     var serialized = JSON.stringify(takeoffs);
     var serialized2 = JSON.stringify(materialNames);
+    var serialized3 = JSON.stringify(deleted);
     sessionStorage.setItem("TakeOff", serialized);
     sessionStorage.setItem("Material", serialized2);
+    sessionStorage.setItem("Deleted", serialized3);
 }
 
 function exitConfirmation(){
@@ -159,6 +185,8 @@ function makeNewTakeOff(){
     takeoff.new_takeoffid = "";
     takeoff.new_typecountpairs = [];
     takeoff.takeoff_details = [];
+    takeoff.isNew = true;
+    takeoff.changed = false;
     
     takeoffs.push(takeoff);
 }
@@ -167,7 +195,7 @@ function processResults(results) {
     takeoffs.length = 0;
     takeoffs = JSON.parse(JSON.stringify(results.entities.reduce(processRecord, [])));
     if(takeoffs.length === 0){
-        makeNewTakeOff()
+        makeNewTakeOff();
     }
     populateTables();
 }
@@ -196,6 +224,8 @@ function createParentObject(record) {
         new_perimeterwaste: record.new_perimeterwaste,
         new_remarks: record.new_remarks,
         new_typecountpairs: types,
+        isNew: false,
+        changed: false,
         takeoff_details: []
     };
 }
@@ -203,17 +233,20 @@ function createParentObject(record) {
 function processMaterial(record, parent) {
     if (record["new_takeoffmaterial_TakeoffDetail_new_takeoffdetail.new_materialtype"]) {
         const material = {
+            new_takeoffmaterialid: record["new_takeoffmaterial_TakeoffDetail_new_takeoffdetail.new_takeoffmaterialid"],
             new_detailtype: record["new_takeoffmaterial_TakeoffDetail_new_takeoffdetail.new_detailtype@OData.Community.Display.V1.FormattedValue"],
             new_totaldimension: record["new_takeoffmaterial_TakeoffDetail_new_takeoffdetail.new_totaldimension"],
             new_quantity: record["new_takeoffmaterial_TakeoffDetail_new_takeoffdetail.new_quantity"],
             new_materialname: record["new_takeoffmaterial_TakeoffDetail_new_takeoffdetail.new_materialname"],
-            new_materialtype: record["new_takeoffmaterial_TakeoffDetail_new_takeoffdetail.new_materialtype"]
+            new_materialtype: record["new_takeoffmaterial_TakeoffDetail_new_takeoffdetail.new_materialtype"],
+            isNew: false,
+            changed: false
         };
 
         if (!materialNames.some(mat => mat.name === material.new_materialtype)) {
             materialNames.push({
                 name: material.new_materialtype,
-                type: record["new_TakeoffDetail_new_takeoff.new_detailtype@OData.Community.Display.V1.FormattedValue"]
+                type: record["new_TakeoffDetail_new_takeoff.new_detailtype@OData.Community.Display.V1.FormattedValue"],
             });
         }
 
@@ -223,7 +256,7 @@ function processMaterial(record, parent) {
 }
 
 function processDetailRecord(record, parent) {
-    const material = processMaterial(record, parent);
+    let material = processMaterial(record, parent);
     const detailId = record["new_TakeoffDetail_new_takeoff.new_takeoffdetailid"];
 
     if (detailId && (!parent.takeoff_details.length || detailId !== parent.takeoff_details[parent.takeoff_details.length - 1].guid)) {
@@ -232,7 +265,9 @@ function processDetailRecord(record, parent) {
             materials: material ? [material] : [],
             new_takeoffdetail1: record["new_TakeoffDetail_new_takeoff.new_takeoffdetail1"],
             new_measurement: record["new_TakeoffDetail_new_takeoff.new_measurement"],
-            new_detailtype: record["new_TakeoffDetail_new_takeoff.new_detailtype@OData.Community.Display.V1.FormattedValue"]
+            new_detailtype: record["new_TakeoffDetail_new_takeoff.new_detailtype@OData.Community.Display.V1.FormattedValue"],
+            isNew: false,
+            changed: false
         });
     } else if (material) {
         parent.takeoff_details[parent.takeoff_details.length - 1].materials.push(material);
@@ -266,8 +301,11 @@ function createCheckBox(row, isChecked){
 function createDeleteButton(row){
     $('<td>').append(
         $('<button>', {
-            text: 'Delete',
-        })
+            class: 'btn btn-outline-danger IconButton'
+        }).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">" +
+            "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z\"/>" +
+            "<path d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z\"/>" +
+          "</svg>")
     ).appendTo(row);
 }
 
@@ -316,31 +354,75 @@ function fillNewRow(row){
     createDeleteButton(row);
 }
 
+function errorAlert(msg){
+    Swal.fire({
+        title: 'Error',
+        text: `An Error Occured. ${msg}`,
+        icon: 'error',
+        confirmButtonText: 'Dismiss',
+        confirmButtonColor: "#e91d2d"
+    });
+}
+
+function newNameVerification(name, isDetail){
+    const msg = isDetail ? "Detail" : "Type";
+    if(name === ""){
+        errorAlert(`${msg} Name contains no value.`);
+        return false;
+    }
+
+    const contains = isDetail ? 
+                        takeoffs[0].takeoff_details.some(detail => detail.new_takeoffdetail1.toLowerCase() === name.toLowerCase()) :
+                        takeoffs[0].new_typecountpairs.some(type => type.type.toLowerCase() === name.toLowerCase());
+    
+    
+    if(contains){
+        errorAlert(`${msg} Name already exists.`);
+        return false;
+    }
+    return true;
+}
+
 function makeNewDetail(name, row){
+    name = `${takeoffs[0].name} - ${name}`;
+    if(!newNameVerification(name, true)){
+        return false;
+    }
+    
     var tableId = row.closest('table').attr('id');
-    console.log(tableId);
+    row.find("td:eq(0)").text(name);
     var detail = {};
     detail.guid = "";
     detail.new_detailtype = tableId === "Details" ? "Perimeter" : "Field";
     detail.new_measurement = 0;
     detail.new_takeoffdetail1 = name;
     detail.materials = [];
+    detail.isNew = true;
+    detail.changed = false;
     
     takeoffs[0].takeoff_details.push(detail);
     
     tableId === "Details" ? fillNewRow(row) : fillNewField(row);
+    return true;
 }
 
 function makeNewTypeCount(name, row){
+    if(!newNameVerification(name, false)){
+        return false;
+    }
+    
     var typecount = {};
     typecount.type = name;
     typecount.count = 0;
     
     takeoffs[0].new_typecountpairs.push(typecount);
+    takeoffs[0].changed = true;
     
     createNumberCell(row, 0);
     
     createDeleteButton(row);
+    
+    return true;
 }
 
 function contentEditableCell(row, rowFunc){
@@ -349,11 +431,10 @@ function contentEditableCell(row, rowFunc){
         .attr("contenteditable", "true")
         .on("blur", function () {  
             var cellrow = $(this).closest('tr');
-            $(this).attr("contenteditable", "false");
-            $(this).off('blur keydown');
-            rowFunc($(this).html().trim(), cellrow);
-            //makeNewDetail($(this).html().trim());
-            //fillNewRow(cellrow);
+            if(rowFunc($(this).html().trim(), cellrow)){
+                $(this).attr("contenteditable", "false");
+                $(this).off('blur keydown');
+            }
         })
         .on("keydown", function (event) {
             if (event.key === "Enter") {
@@ -366,18 +447,7 @@ function contentEditableCell(row, rowFunc){
 }
 
 function createNumberCell(row, value){
-    $('<td>').append(
-        $('<div></div>' , {
-            class: 'input-group'
-        }).append(
-            $('<div></div>', {
-                class: 'input-group-prepend'
-            }).append(
-                $('<span></span>', {
-                    class: 'input-group-text'
-                }).html(' ')
-            )
-        ).append(   
+    $('<td>').append(   
             $('<input>', {
                 class: 'form-control',
                 type: 'number',
@@ -386,8 +456,7 @@ function createNumberCell(row, value){
             .click(function(){
                 $(this).select();
             })
-        )  
-    ).appendTo(row);
+        ).appendTo(row);
 }
 
 function addDetailRow(detail, isNew){
@@ -511,7 +580,9 @@ function addNewMaterial(match, name){
         new_totaldimension: 0,
         new_quantity: 0,
         new_materialname: `${name} - ${match.new_takeoffdetail1}`,
-        new_materialtype: name
+        new_materialtype: name,
+        isNew: true,
+        changed: false
     };
     match.materials.push(material);
     return material;
@@ -522,9 +593,11 @@ function detailRowReCalc(row, event){
     const match_detail = takeoffs[0].takeoff_details.find(detail => detail.new_takeoffdetail1 === row.find("td:eq(0)").text());
     if(columnInd === 1){
         match_detail.new_measurement = $(event.target).val();
+        match_detail.changed = true;
         match_detail.materials.forEach(mat => {
             mat.new_totaldimension = ($(event.target).val() * mat.new_quantity) * (1 + ($('#DetailWaste').val()/100));
             mat.new_totaldimension = Number(mat.new_totaldimension.toFixed(2));
+            mat.changed = true;
         });	
     }
     else if(columnInd > 1){
@@ -534,6 +607,7 @@ function detailRowReCalc(row, event){
         match.new_quantity = Number($(event.target).val());
         match.new_totaldimension = (match.new_quantity * match_detail.new_measurement) * (1 + ($('#DetailWaste').val()/100));
         match.new_totaldimension = Number(match.new_totaldimension.toFixed(2));
+        match.changed = true;
     }
 }
 
@@ -541,16 +615,20 @@ function fieldRowReCalc(row, event){
     let columnInd = $(event.target).closest('td, th').index();
     const match_field = takeoffs[0].takeoff_details.find(detail => detail.new_takeoffdetail1 === row.find("td:eq(0)").text());
     if(columnInd === 1){
-        match_field.new_detailtype = $(event.target).prop("checked") ? "FieldInTotal" : "Field";	
+        match_field.new_detailtype = $(event.target).prop("checked") ? "FieldInTotal" : "Field";
+        match_field.changed = true;
         match_field.materials.forEach(mat => {
             mat.new_detailtype = match_field.new_detailtype;
+            mat.changed = true;
         });
     }
     else if(columnInd === 2){
         match_field.new_measurement = $(event.target).val();
+        match_field.changed = true;
         match_field.materials.forEach(mat => {
             mat.new_totaldimension = ($(event.target).val() * mat.new_quantity) * (1 + ($('#FieldWaste').val()/100));
             mat.new_totaldimension = Number(mat.new_totaldimension.toFixed(2));
+            mat.changed = true;
         });	
     }
 }
@@ -580,32 +658,55 @@ function detailsEventHandler(event, isDetail){
     populateDetailsTable();
 }
 
-function addNewMatInputCheck(result){
-    if (result.isConfirmed) {
-        const newMaterial = {
-            name: result.value,
-            type: 'Perimeter'  // Types may no longer be required
-        };
-        materialNames.push(newMaterial);
-        
-        // Add new column header
-        var heads = $('#Details thead tr').children('th');
-        var secondLast = heads.length - 1;
-        
-        $('<th>').text(newMaterial.name).insertBefore(heads.eq(secondLast));
-        
-        $('#Detail tbody tr').each(() => {
-            const cells = $(this).children('td');
-            const lastCell = $(this).children('td');
-            
-            lastCell.detach();
-            createNumberCell($(this), 0);
-            lastCell.appendTo($(this));
-        });
-            
-        // Refresh the total material table
-        populateTotalMatTable();
+function verifyMaterial(result){
+    if(!result.isConfirmed){
+        return false;
     }
+
+    if(materialNames.some(mat => mat.name.toLowerCase() === result.value.toLowerCase())){
+        errorAlert("Material Name already exists.");
+        return false;
+    }
+    
+    if(result.value === ""){
+        errorAlert("Material Name cannot be empty.");
+        return false;
+    }
+    return true;
+}
+
+function addNewMatInputCheck(result){
+    if(!verifyMaterial(result)){ return; }
+        
+    const newMaterial = {
+        name: result.value,
+        type: 'Perimeter'  // Types may no longer be required
+    };
+    materialNames.push(newMaterial);
+        
+    // Add new column header
+    var heads = $('#Details thead tr').children('th');
+    var secondLast = heads.length - 1;
+        
+    $('<th>').text(newMaterial.name).insertBefore(heads.eq(secondLast));
+        
+    $('#Details tbody tr').each((index, row) => {
+        var cells = $(row).children('td');
+        var ind = cells.length - 1;
+        $('<td>').append(   
+            $('<input>', {
+                class: 'form-control',
+                type: 'number',
+                value: 0
+            })
+            .click(function(){
+                $(this).select();
+            })
+        ).insertBefore(cells.eq(ind)); 
+    });
+            
+    // Refresh the total material table
+    populateTotalMatTable();
 }
 
 function addNewMaterialButton() {
@@ -614,6 +715,8 @@ function addNewMaterialButton() {
         input: 'text',
         inputLabel: 'Enter the name of the new material',
         showCancelButton: true,
+        cancelButtonColor: "#3d3935",
+        confirmButtonColor: "#e91d2d",
         inputValidator: (value) => {
             if (!value) {
                 return 'You need to write something!'
@@ -628,6 +731,7 @@ function addNewMaterialButton() {
 function changeWasteHandler(){
     takeoffs[0].new_fieldwaste = Number($('#FieldWaste').val());
     takeoffs[0].new_perimeterwaste = Number($('#DetailWaste').val());
+    takeoffs[0].changed = true;
     
     populateDetailsTable();
     populateTotalMatTable();
@@ -639,9 +743,14 @@ function deleteDetailButton(event){
     const detailName = row.find('td:eq(0)').text();
     
     //Removes detail
+    var detail = takeoffs[0].takeoff_details.find(detail => detail.new_takeoffdetail1 === detailName);
+    if(detail.guid !== ""){
+        var detailDeleteInfo = { id: detail.guid, type: "Detail" };
+        deleted.push(detailDeleteInfo);
+    }
+    
     takeoffs[0].takeoff_details = JSON.parse(JSON.stringify(takeoffs[0].takeoff_details.filter(detail => detail.new_takeoffdetail1 !== detailName)));
     
-    //populateDetailsTable();
     row.remove();
     populateTotalMatTable();
 }
@@ -652,14 +761,34 @@ function deletePenOpenButton(event){
     const typeName = row.find('td:eq(0)').text();
     
     takeoffs[0].new_typecountpairs = JSON.parse(JSON.stringify(takeoffs[0].new_typecountpairs.filter(type => type.type !== typeName)));
+    takeoffs[0].changed = true;
     
     row.remove();
     populatePenOpenTable();
 }
 
+function changeRemarkHandler(){
+    takeoffs[0].new_remarks = $('#Remarks').val();
+    takeoffs[0].changed = true;
+}
+
+function loadingCircle(){
+    $('.PageDiv').toggleClass("LoadPage");
+    $('.loader').toggleClass("show");
+    $('html').toggleClass("LoadingCursor");
+    
+    if($('html').hasClass("LoadingCursor")){
+        $('.PageDiv').css('pointer-events', 'none');
+    }
+    else{
+        $('.PageDiv').css('pointer-events', 'auto');
+    }
+}
+
 function loadTakeOff(){
     takeoffs = retrieveSession("TakeOff");
     materialNames = retrieveSession("Material");
+    deleted = retrieveSession("Deleted");
     if(takeoffs.length === 0){
         retrieveTakeOffAPI();
     }
@@ -673,6 +802,7 @@ function loadTakeOff(){
 //
 //
 //
+
 $('#Details tbody').on('keypress', 'input', (event) => {
     if(event.key === "Enter"){
         detailsEventHandler(event, true);
@@ -749,5 +879,9 @@ $('#FieldButton').click((event) => { addFieldRow(null, true)});
 $('#MaterialButton').click((event) => { addNewMaterialButton() });
 
 $('.waste-control').blur(changeWasteHandler);
+
+$('#Remarks').blur(changeRemarkHandler);
+
+$('#SaveButton').click(takeoffAPI);
 
 loadTakeOff();
