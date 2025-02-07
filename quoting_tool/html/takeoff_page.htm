@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../../lib/bootstrap.css">
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="../../lib/JQuery/jquery_v3_7_1.js"></script>
+    <script src="../../lib/sweetalert2.js"></script>
+    <script src="../js/universal_Functions.js"></script>
+    <script src="../js/takeoff_manager/takeoff_RetrieveApi.js"></script>
+    <script src="../js/takeoff_manager/takeoff_SaveApi.js"></script>
+    <script src="../js/takeoff_manager/takeoff_PageManipulation.js"></script>
+    <script src="../js/takeoff_manager/takeoff_EventListeners.js"></script>
+    <script src="../js/takeoff_manager/takeoff_HelperFunctions.js"></script>
+</head>
+<body>
+      <div class="sticky-top">
+          <nav class="py-2 bg-body-tertiary border-bottom">
+            <div class="container flex-wrap">
+              <ul class="nav">
+                <li class="nav-item"><a href="#" id="ProductButton" class="NavButton nav-link link-body-emphasis px-2">Products</a></li>
+                <li class="nav-item"><a href="#" id="TemplateButton" class="NavButton nav-link link-body-emphasis px-2">Templates</a></li>
+                <li class="nav-item"><a href="#" id="QuoteButton" class="NavButton nav-link link-body-emphasis px-2">Quote</a></li>
+                <li class="nav-item me-auto"><a href="#" id="TakeoffButton" class="nav-link link-body-emphasis px-2" aria-current="page">Takeoff</a></li>
+                <li class="nav-item">
+                    <a href="#" id="SaveButton" class="NavButton nav-link link-body-emphasis px-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-floppy" viewBox="0 0 16 16">
+                            <path d="M11 2H9v3h2z"/>
+                            <path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z"/>
+                        </svg> Save
+                    </a>
+                </li>
+                <li class="nav-item"><a href="#" id="ExitButton" class="NavButton nav-link link-body-emphasis px-2">Exit</a></li>
+              </ul>
+            </div>
+          </nav>
+          <header class="py-3 mb-2 border-bottom bg-body">
+            <div class="container d-flex flex-wrap justify-content-center">
+              <div class="d-flex align-items-center mb-3 mb-lg-0 me-lg-auto">
+                <img class="EpicLogo me-2 mt-2" src="https://cdn.prod.website-files.com/60be4c4cf9fd9f61795a5135/60be8f6a4225b441148eeba5_Epic_Logo.svg" alt="Epic Logo">
+                <span id="TakeOffName" class="fs-2">Quote Takeoff</span>
+              </div>
+              <div class="d-flex align-items-center col-12 col-lg-auto mb-3 mb-lg-0">
+                <button id="TopButton" class="IconButton btn btn-outline-danger me-2" type="button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-chevron-bar-up" viewBox="0 0 16 16">
+                      <path fill-rule="evenodd" d="M3.646 11.854a.5.5 0 0 0 .708 0L8 8.207l3.646 3.647a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 0 0 0 .708M2.4 5.2c0 .22.18.4.4.4h10.4a.4.4 0 0 0 0-.8H2.8a.4.4 0 0 0-.4.4"/>
+                    </svg>
+                </button>
+                
+                <input type="search" id="SearchBar" class="form-control me-2" placeholder="Search..." aria-label="Search">
+                <button class="btn btn-outline-danger" type="button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                    </svg>
+                </button>
+              </div>
+            </div>
+          </header>
+      </div>
+    <div class="container">
+        <div class="d-flex align-items-start">
+            <table id="Fields" class="table table-striped table-bordered table-hover caption-top">
+                 <caption>Field</caption>
+                 <thead class="table-dark">
+                   <tr>
+                     <th>Field Name</th>
+                     <th>Include in Total</th>
+                     <th>Measure (Sq Unit)</th>
+                     <th>Waste Added</th>
+                     <th></th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                 </tbody>
+            </table>
+            
+            <div class="d-flex align-items-center input-group ms-2 TakeoffSideElement">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">Field Waste %</span>
+                </div>
+                <input class="form-control waste-control" id="FieldWaste" type="number" placeholder="0" min="0">
+            </div>
+        </div>
+        <button id="FieldButton" class="mb-3 btn btn-secondary" type="button">+ New Assembly</button>
+        
+        <div class="d-flex align-items-start">
+            <table id="Details" class="table table-striped table-bordered table-hover caption-top">
+                 <caption>Details</caption>
+                 <thead class="table-dark">
+                   <tr>
+                     <th>Detail</th>
+                     <th>Measure (Ln Unit)</th>
+                     <th></th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                 </tbody>
+            </table>
+            <div class="ms-2 TakeoffSideElement">
+                <button id="MaterialButton" class="btn btn-secondary" type="button">+ New Material</button>
+            </div>
+        </div>
+        <button id="DetailButton" class="mb-3 btn btn-secondary" type="button">+ New Detail</button>
+        
+        <div class="d-flex align-items-start">
+            <table id="TotalMaterial" class="table table-striped table-bordered table-hover caption-top">
+                 <caption>Total Detail Material</caption>
+                 <thead class="table-dark">
+                   <tr>
+                     <th>Material</th>
+                     <th>Total</th>
+                     <th>Total with Waste</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                 </tbody>
+            </table>
+            
+            <div class="d-flex align-items-center input-group ms-2 TakeoffSideElement">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">Details Waste %</span>
+                </div>
+                <input class="form-control waste-control" id="DetailWaste" type="number" placeholder="0" min="0">
+            </div>
+        </div>
+        
+        <table id="PenOpen" class="table table-striped table-bordered table-hover caption-top">
+             <caption>Penetration/Openings</caption>
+             <thead class="table-dark">
+               <tr>
+                 <th>Type</th>
+                 <th>Count</th>
+                 <th></th>
+               </tr>
+             </thead>
+             <tbody>
+             </tbody>
+        </table>
+        <button id="PenOpenButton" class="mb-3 btn btn-secondary" type="button">+ Row</button><br>
+        
+        <label for="notes">Notes</label>
+        <br>
+        <textarea id="Remarks" name="notes" rows="4" cols="50"></textarea>
+    </div>
+    
+</body>
+</html>
