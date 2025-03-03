@@ -57,43 +57,13 @@ $('#TopButton').on("click", scrollToTop);
         console.log("No data found in storage.");
     }
 
-    $('#SearchButton').on('click', searchBarHandler);
-    $('#SearchBar').on('keypress', (event) => { event.key === 'Enter' ? searchBarHandler() : null; });
-    $('#SearchBar').blur(searchBarHandler);
-
-    //When the window is closed delete the "Items" cookie
-    window.addEventListener('beforeunload', (event) => {
-        //if (!redirect || !(performance.navigation.type === 1)) {
-          //  sessionStorage.clear();
-        //}
+    $('#SearchBar').on('blur', function(){
+        if($('#SearchBar').val() === ""){
+            searchBarHandler();
+        }
     });
-}
-
-//Scrolls back to top of page	
-function scrollToTop() {
-    $(window).scrollTop(0);
-}
-
-//
-//
-//
-//
-
-
-function exitConfirmation(){
-    Swal.fire({
-        title: 'Are You Sure You Want To Leave?',
-        html: "Any Unsaved Changes will be Lost",
-        icon: 'warning',
-        showCancelButton: true,
-        allowOutsideClick: false, // Prevents dismissing by clicking outside
-        confirmButtonText: 'Don\'t Leave',
-        cancelButtonText: 'Leave Anyways'
-    }).then((result) => {
-                    if (!result.isConfirmed) {
-                        parent.window.close();
-                    }
-    });
+    $('#SearchBar').on("keypress",(event) => {event.key === 'Enter' ? (searchBarHandler(), $('#SearchBar').blur()) : null;});
+    $('#SearchButton').click(searchBarHandler);
 }
 
 // FetchXML Testing Gone Wild
@@ -132,159 +102,278 @@ var templateInfo = [];
 getTemplateAPI();
 //populateTable();
 
+//
+// FUNCTIONS
+//
+
+
+//Scrolls back to top of page	
+function scrollToTop() {
+    $(window).scrollTop(0);
+}
+
+function exitConfirmation(){
+    Swal.fire({
+        title: 'Are You Sure You Want To Leave?',
+        html: "Any Unsaved Changes will be Lost",
+        icon: 'warning',
+        showCancelButton: true,
+        allowOutsideClick: false, // Prevents dismissing by clicking outside
+        confirmButtonText: 'Don\'t Leave',
+        cancelButtonText: 'Leave Anyways',
+        cancelButtonColor: "#3d3935",
+        confirmButtonColor: "#e91d2d"
+    }).then((result) => {
+                    if (!result.isConfirmed) {
+                        parent.window.close();
+                    }
+    });
+}
+
 function populateTable() {
     console.log(lineItems);
     for (let i = 0; i < templateInfo.length; i++) {
         console.log(templateInfo[i]);
         var templateAdded = true;
         // Create the parent row
-        const parentRow = $(`<tr>`).appendTo($('#TemplateTable'));
+        const parentRow = $('<tr>').appendTo($('#TemplateTable'));
         const uniqueId = templateInfo[i].name.replace(/\s+/g, "_"); // Create a unique ID from the name
         const itemCount = templateInfo[i].quote_details.length;
         // Add onclick handler for the parent row
         parentRow.click(function (event) {
             //ensure the click event is not on the exclude-toggle button
             if ($(event.target).closest('td').hasClass('TemplateDropdown')) {
-                for (let k = 1; k <= itemCount; k++) {
-                    $(`#hidden_row${uniqueId}${k}`).toggle();
-                }
+                $('#ItemTableCell' + i).toggle();
             }
         });
 
         // Append cells to the parent row
-        var button = document.createElement("button");
-        button.addEventListener('click', function (event) { addItemToQuote(event, uniqueId, i) });
-        button.classList.add('btn', 'btn-outline-secondary', 'IconButton');
-        button.innerHTML = ("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
-                                "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
-                            "</svg>");
-
-        $('<td class="TemplateDropdown">').attr('colspan', 8).html(templateInfo[i].name).appendTo(parentRow);
-        const addTempToQuote = $('<td>').html(button).addClass('exclude-toggle').appendTo(parentRow);
-
-        //addTempToQuote.html("+ Quote");
+        $('<td>', {
+            class: 'TemplateDropdown',
+            text: templateInfo[i].name
+        }).appendTo(parentRow);
+        
+        const tableRow = $('<tr>').appendTo($('#TemplateTable'));
+        
+        $('<td>', {
+            colspan: 2,
+            id: 'ItemTableCell' + i
+        }).css('display', 'none').append(
+            $('<table>', {
+                class: 'table table-striped table-hover table-bordered',
+                id: 'TemplateItemTable' + i
+            }).append(
+                $('<thead>', {
+                    class: 'table-dark'
+                }).append(
+                    $('<tr>').append(
+                        $('<th>', {
+                            text: 'Product'
+                        }),
+                        $('<th>', {
+                            text: 'Unit'
+                        }),
+                        $('<th>', {
+                            text: 'Purchase Unit'
+                        }),
+                        $('<th>', {
+                            text: 'Make'
+                        }),
+                        $('<th>', {
+                            text: 'Category 1'
+                        }),
+                        $('<th>', {
+                            text: 'Category 2'
+                        }),
+                        $('<th>', {
+                            text: 'Category 3'
+                        }),
+                        $('<th>')
+                    )
+                ),$('<tbody>')
+            )
+        ).appendTo(tableRow);
+        
 
         // Create the hidden row
         for (let j = 1; j <= itemCount; j++) {
-            const hiddenRow = $(`<tr id="hidden_row${uniqueId}${j}" class="hidden_row" style="display: none;">`).appendTo($('#TemplateTable'));
-            $('<td>').html("").appendTo(hiddenRow);
-            $('<td>').attr('colspan',1).html(templateInfo[i].quote_details[j - 1].name).appendTo(hiddenRow);
+            const hiddenRow = $(`<tr id="hidden_row${uniqueId}${j}" class="hidden_row">`).appendTo($('#TemplateItemTable' + i + ' tbody'));
+            $('<td>').html(templateInfo[i].quote_details[j - 1].name).appendTo(hiddenRow);
             $('<td>').html(templateInfo[i].quote_details[j - 1].defaultuomid.name).appendTo(hiddenRow);
-            $('<td>').html("$" + templateInfo[i].quote_details[j - 1].davinci_purchaseunitcost).appendTo(hiddenRow);
+            $('<td>').html(templateInfo[i].quote_details[j - 1].davinci_purchaseunitcost).appendTo(hiddenRow);
             $('<td>').html(templateInfo[i].quote_details[j - 1].davinci_make_newap).appendTo(hiddenRow);
             $('<td>').html(templateInfo[i].quote_details[j - 1].davinci_category1_newap).appendTo(hiddenRow);
             $('<td>').html(templateInfo[i].quote_details[j - 1].davinci_category2_newap).appendTo(hiddenRow);
             $('<td>').html(templateInfo[i].quote_details[j - 1].davinci_category3_newap).appendTo(hiddenRow);
 
             if (lineItems.some(item => item.name === templateInfo[i].quote_details[j - 1].name)) {
-                $('<td>').html("<strong>Added</strong>").appendTo(hiddenRow);
+                $('<td>').append(
+                    $('<button>', {
+                        class: 'btn btn-outline-danger IconButton',
+                        'data-unique-id': uniqueId,
+                        'data-row-index': j
+                    }).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">" +
+                              "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z\"/>" +
+                              "<path d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z\"/>" +
+                            "</svg>")
+                    .click(function (){ 
+                        if($(this).hasClass('btn-outline-secondary')){
+                            addItemToQuote(uniqueId, j);
+                        }
+                        else{
+                            lineItems = lineItems.filter(line => line.name !== templateInfo[i].quote_details[j - 1].name);
+                            $(this).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
+                              "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
+                            "</svg>");
+                            $(this).toggleClass('btn-outline-secondary btn-outline-danger');
+                        }
+                    })
+                ).appendTo(hiddenRow);
             } else {
                 templateAdded = false;
                 $('<td>').append(
                     $('<button>', {
-                        text: '+ Quote',
-                        class: 'btn btn-secondary',
+                        class: 'btn btn-outline-secondary IconButton',
                         'data-unique-id': uniqueId,
                         'data-row-index': j
-                    }).click(function (event) { (addItemToQuote(event, uniqueId, j)) })
+                    }).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
+                                "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
+                            "</svg>")
+                    .click(function (){ 
+                        if($(this).hasClass('btn-outline-secondary')){
+                            addItemToQuote(uniqueId, j);
+                        }
+                        else{
+                            lineItems = lineItems.filter(line => line.name !== templateInfo[i].quote_details[j - 1].name);
+                            $(this).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
+                              "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
+                            "</svg>");
+                            $(this).toggleClass('btn-outline-secondary btn-outline-danger');
+                        }
+                    })
                 ).appendTo(hiddenRow);
             }
         }
 
-        if (templateAdded) {
-            addTempToQuote.html("<strong>Added</strong>");
-            addTempToQuote.disabled = true;
+        if(templateAdded){
+            $('<td>', {
+                class: 'exclude-toggle'
+            }).append(
+                $('<button>', {
+                    class: 'btn btn-danger IconButton'
+                }).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">" +
+                            "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z\"/>" +
+                            "<path d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z\"/>" +
+                        "</svg>")
+                .click(function (event){  
+                    if($(this).hasClass('btn-secondary')){
+                        addTemplateToQuote(event, uniqueId, i);
+                        $(this).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">" +
+                            "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z\"/>" +
+                            "<path d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z\"/>" +
+                        "</svg>");
+                     }
+                     else{
+                        for(let j = 1; j <= itemCount; j++){
+                            lineItems = lineItems.filter(line => line.name !== templateInfo[i].quote_details[j - 1].name);
+                            const hiddenRowButton = $(`#hidden_row${uniqueId}${j}`).find('button');
+                            if(hiddenRowButton.hasClass('btn-outline-danger')){
+                                hiddenRowButton.toggleClass('btn-outline-secondary btn-outline-danger');
+                                hiddenRowButton.html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
+                                   "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
+                                "</svg>");
+                            }
+                        }
+                        $(this).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
+                            "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
+                        "</svg>");
+                     }
+                     $(this).toggleClass('btn-secondary btn-danger');
+                })
+             ).appendTo(parentRow);
+        }
+        else{
+            $('<td>', {
+                class: 'exclude-toggle'
+            }).append(
+                $('<button>', {
+                    class: 'btn btn-secondary IconButton'
+                }).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
+                            "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
+                        "</svg>")
+                .click(function (event){ 
+                    if($(this).hasClass('btn-secondary')){
+                        addTemplateToQuote(event, uniqueId, i);
+                        $(this).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">" +
+                            "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z\"/>" +
+                            "<path d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z\"/>" +
+                        "</svg>");
+                     }
+                     else{
+                        for(let j = 1; j <= itemCount; j++){
+                            lineItems = lineItems.filter(line => line.name !== templateInfo[i].quote_details[j - 1].name);
+                            const hiddenRowButton = $(`#hidden_row${uniqueId}${j}`).find('button');
+                            if(hiddenRowButton.hasClass('btn-outline-danger')){
+                                hiddenRowButton.toggleClass('btn-outline-secondary btn-outline-danger');
+                                hiddenRowButton.html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
+                                   "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
+                                "</svg>");
+                            }
+                        }
+                        $(this).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
+                            "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
+                        "</svg>");
+                     }
+                     $(this).toggleClass('btn-secondary btn-danger');
+                })
+             ).appendTo(parentRow);
         }
     }
 }
 
-// Add an item to the quote by saving the product in the session storage
-function addItemToQuote(event, uniqueId, rowIndex) {
-    console.log("Adding item to quote");
-    // grabbing the button that was clicked
-    const button = $(event.target);
-    const isParentRow = button.closest('td').hasClass('exclude-toggle');
+// Add an entire template to the quote by saving the it in the session storage
+function addTemplateToQuote(event, uniqueId, rowIndex){
+    console.log("Template was selected");
 
-    // If the parent row was clicked, add all the child items to the quote
-    if (isParentRow) {
-        console.log("Template was selected");
-        //button.html = "<strong>Added</strong>";
-        button.disabled = true;
-        const cell = button.closest('td');
-        cell.html("<strong>Added</strong>");
-
-        // Get the unique ID of the parent row
-        const template = templateInfo.find(t => t.name.replace(/\s+/g, "_") === uniqueId);
-        if(!template) {
-            console.log("Template not found");
-            return;
-        }
-
-        for (let j = 1; j <= template.quote_details.length; j++) {
-            // Get the item from the templateInfo array
-            console.log(template.quote_details);
-            const selectedItem = template.quote_details[j - 1];
-            // Check if the item is already in the quote
-            if (lineItems.some(item => item.name === selectedItem.name)) {
-                console.log("Items already in quote");
-                continue;
-            }
-            // Add the item to the quote
-            lineItems.push(selectedItem);
-            lineItems[lineItems.length - 1].isChanged = true;
-            
-            const hiddenRowButton = $(`#hidden_row${uniqueId}${j}`).find('button');
-            hiddenRowButton.replaceWith("<strong>Added</strong>");
-            // Set the text of the button to "Added"
-            //parentRow.find('td:eq(1)').html("<strong>Added</strong>");
-        }
-    } else {
-        // If a child item was clicked, add only that item to the quote
-        console.log("Individual line item was selected");
-        const cell = button.closest('tr').find('td:eq(8)');
-        cell.html("<strong>Added</strong>");
-
-        const template = templateInfo.find(t => t.name.replace(/\s+/g, "_") === uniqueId);
-
-        if (!template) {
-            console.log("Template not found");
-            return;
-        }
-
-        const selectedItem = template.quote_details[rowIndex - 1];
-        // Check if the item is already in the quote
-        if (lineItems.some(item => item.name === selectedItem.name)) {
-            console.log("Item already in quote");
-            return;
-        }
-        // Add the item to the quote
-        lineItems.push(selectedItem);
-        lineItems[lineItems.length-1].isChanged = true;
-        // Set the text of the button to "Added"
-        //button.html("<strong>Added</strong>");
+    // Get the unique ID of the parent row
+    const template = templateInfo.find(t => t.name.replace(/\s+/g, "_") === uniqueId);
+    if(!template) {
+        console.log("Template not found");
+        return;
     }
+    console.log(template.quote_details);
     
-    // // need to check if the parent or hidden row was added clicked
-    // if ($(this.event.target).closest('td').hasClass('exclude-toggle')) {
-    //     console.log("The template was selected");
-    //     const cell = event.target.closest('td');
-    //     cell.innerHTML = "<strong>Added</strong>";
+    for (let j = 1; j <= template.quote_details.length; j++) {
+        addItemToQuote(uniqueId, j);
+    }
+}
 
-    // } else {    // a individual line item was selected
-    //     // check if the item is already in the quote
-    //     //const hiddenRow = $('#${hiddenRowId}');
-    //     const cell = $(event.target).closest('tr').find('td:eq(1)');
+// Add an item to the quote by saving the product in the session storage
+function addItemToQuote(uniqueId, rowIndex) {
+    const template = templateInfo.find(t => t.name.replace(/\s+/g, "_") === uniqueId);
+    if (!template) {
+        console.log("Template not found");
+        return;
+    }
 
-    //     cell.innerHTML = "<strong>Added</strong>";
-    //     if (lineItems.some(item => templateInfo/*item.productid === templateInfo..quote_details[j - 1].productid*/)) {
-    //         console.log("Item already in quote");
-    //         return;
-    //     } else {
-    //         console.log("Item not in quote");
-    //     }
-    //     //console.log(hiddenRow);
-
-    // }
+    const selectedItem = template.quote_details[rowIndex - 1];
+    // Check if the item is already in the quote
+    if (lineItems.some(item => item.name === selectedItem.name)) {
+        console.log("Item already in quote");
+        return;
+    }
+    console.log("Adding item to quote");
+    
+    const hiddenRowButton = $(`#hidden_row${uniqueId}${rowIndex}`).find('button');
+    hiddenRowButton.toggleClass('btn-outline-secondary btn-outline-danger');
+    hiddenRowButton.html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">" +
+        "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z\"/>" +
+        "<path d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z\"/>" +
+    "</svg>");
+    
+    // Add the item to the quote
+    lineItems.push(selectedItem);
+    lineItems[lineItems.length-1].isChanged = true;
 }
 
 function getTemplateAPI() {

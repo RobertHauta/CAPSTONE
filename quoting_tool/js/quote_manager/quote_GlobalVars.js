@@ -33,7 +33,6 @@ var redirect = false;
 //Test Values will be dynamic in future
 var QuoteId = "";
 var LaborId = "";
-var OpportunityId = "1bbcf3ef-e330-40ce-af4c-ed541dbe4c0f" //Testing Value will be integrated later
 //varible to store information from the MDA form in order to query for the correct quote
 var QuoteInfo = {};
 //all the lines to be highlited from search

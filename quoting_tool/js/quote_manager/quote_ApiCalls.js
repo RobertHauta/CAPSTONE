@@ -1,5 +1,5 @@
 /*
- * File Name: XrmApi_DatabaseCalls.js
+ * File Name: quote_ApiCalls.js
  *
  * Description: This file contains all functions used by quote_editor to query the
  * database using Xrm.WebApi

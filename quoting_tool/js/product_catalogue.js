@@ -65,9 +65,13 @@ $(window).on("load", function() {
     quoteLineItems = retrieveSession("Items");
     console.log(quoteLineItems);
 
-    //$('#SearchButton').on('click', filter);
-    $('#SearchBar').on('keypress', (event) => {event.key === 'Enter' ? filter() : null;});
-    $('#SearchBar').blur(filter);
+    $('#SearchBar').on('keypress', (event) => {event.key === 'Enter' ? (filter(), $('#SearchBar').blur()) : null;});
+    $('#SearchBar').on('blur', function(){
+        if($('#SearchBar').val() === ""){
+            filter();
+        }
+    });
+    $('#SearchButton').click(filter);
 
     //When the window is closed delete the "Items" cookie
     $(window).on('beforeunload', (event) => {
@@ -99,7 +103,9 @@ function exitConfirmation(){
         showCancelButton: true,
         allowOutsideClick: false, // Prevents dismissing by clicking outside
         confirmButtonText: 'Don\'t Leave',
-        cancelButtonText: 'Leave Anyways'
+        cancelButtonText: 'Leave Anyways',
+        cancelButtonColor: "#3d3935",
+        confirmButtonColor: "#e91d2d"
     }).then((result) => {
                     if (!result.isConfirmed) {
                         parent.window.close();
@@ -139,112 +145,106 @@ parent.Xrm.WebApi.retrieveMultipleRecords(tableName, queryString).then(
 }
 
 //Populated with displayed array
+
 function cataloguePopulatorArray(array) {
-    make_types.length = 0;
-    cat1_types.length = 0;
-    cat2_types.length = 0;
-    cat3_types.length = 0;
+    [make_types, cat1_types, cat2_types, cat3_types] = [[], [], [], []];
 
-    const $tableBody = $("#ProductTable tbody");
-    $tableBody.empty();
+    const $tableBody = $("#ProductTable tbody").empty();
 
-    $.each(array, function (index, item) {
+    array.forEach((item, index) => {
         const $row = $("<tr>");
+        const cells = [
+            item.name,
+            item.defaultuomid ? item.defaultuomid.name : "",
+            item.davinci_purchaseunitcost,
+            item.davinci_make_newap,
+            item.davinci_category1_newap,
+            item.davinci_category2_newap,
+            item.davinci_category3_newap
+        ];
 
-        const $cell1 = $("<td>").text(item.name).appendTo($row);
-        const $cell2 = $("<td>").text(item.defaultuomid ? item.defaultuomid.name : "").appendTo($row);
-        const $cell3 = $("<td>").text(item.davinci_purchaseunitcost).appendTo($row);
-        const $cell4 = $("<td>").text(item.davinci_make_newap).appendTo($row);
-        const $cell5 = $("<td>").text(item.davinci_category1_newap).appendTo($row);
-        const $cell6 = $("<td>").text(item.davinci_category2_newap).appendTo($row);
-        const $cell7 = $("<td>").text(item.davinci_category3_newap).appendTo($row);
+        cells.forEach(cellText => $("<td>").text(cellText).appendTo($row));
 
-        const $cell8 = $("<td>");
-
-        // Check if item already exists in quoteLineItems
-        if (quoteLineItems.some(q => q.name === item.name)) {
-            const $button = $("<button>")
-                .addClass("btn btn-outline-danger IconButton")
-                //.text("- Quote")
-                .html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">" +
-                  "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z\"/>" +
-                  "<path d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z\"/>" +
-                "</svg>")
-                .on("click", function () {
-                    const rowIndex = $(this).closest("tr").index();
-                    if($(this).hasClass('btn-outline-secondary')){
-                        quoteLineItems.push(cur_results[array.length - rowIndex - 1]); 
-                        quoteLineItems[quoteLineItems.length - 1].isChanged = true;
-                        $(this).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">" +
-                          "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z\"/>" +
-                          "<path d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z\"/>" +
-                        "</svg>");
-                    }
-                    else{
-                        quoteLineItems = quoteLineItems.filter(line => line.name !== cur_results[array.length - rowIndex - 1].name);
-                        $(this).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
-                          "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
-                        "</svg>");
-                    }
-                    $(this).toggleClass('btn-outline-secondary btn-outline-danger');
-                });
-
-            $cell8.append($button);
-        } else {
-            const $button = $("<button>")
-                .addClass("btn btn-outline-secondary IconButton")
-                //.text("+ Quote")
-                .html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
-                  "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
-                "</svg>")
-                .on("click", function () {
-                    const rowIndex = $(this).closest("tr").index();
-                    if($(this).hasClass('btn-outline-secondary')){
-                        quoteLineItems.push(cur_results[array.length - rowIndex - 1]); 
-                        $(this).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">" +
-                          "<path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z\"/>" +
-                          "<path d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z\"/>" +
-                        "</svg>");
-                    }
-                    else{
-                        quoteLineItems = quoteLineItems.filter(line => line.name !== cur_results[array.length - rowIndex - 1].name);
-                        $(this).html("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" fill=\"currentColor\" class=\"bi bi-plus-lg\" viewBox=\"0 0 16 16\">" +
-                          "<path fill-rule=\"evenodd\" d=\"M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2\"/>" +
-                        "</svg>");
-                    }
-                    $(this).toggleClass('btn-outline-secondary btn-outline-danger');
-                });
-
-            $cell8.append($button);
-        }
-
-        $row.append($cell8);
+        const $button = createButton(item, array.length - index - 1);
+        $("<td>").append($button).appendTo($row);
         $tableBody.append($row);
 
-        // Update category arrays
-        if (!make_types.includes(item.davinci_make_newap) && item.davinci_make_newap !== null) {
-            make_types.push(item.davinci_make_newap);
-        }
-        if (!cat1_types.includes(item.davinci_category1_newap) && item.davinci_category1_newap !== null) {
-            cat1_types.push(item.davinci_category1_newap);
-        }
-        if (!cat2_types.includes(item.davinci_category2_newap) && item.davinci_category2_newap !== null) {
-            cat2_types.push(item.davinci_category2_newap);
-        }
-        if (!cat3_types.includes(item.davinci_category3_newap) && item.davinci_category3_newap !== null) {
-            cat3_types.push(item.davinci_category3_newap);
-        }
-
+        updateCategoryArrays(item);
         cur_results[array.length - index - 1] = item;
     });
 
     populateDropdowns();
 }
 
-// Finds all unique categories in the catalogue
-// Populates dropdowns with list of categories in each column
+function createButton(item, resultIndex) {
+    const isInQuote = quoteLineItems.some(q => q.name === item.name);
+    const buttonClass = isInQuote ? 'btn-outline-danger' : 'btn-outline-secondary';
+    const buttonIcon = isInQuote ? getTrashIcon() : getPlusIcon();
+
+    return $("<button>")
+        .addClass(`btn ${buttonClass} IconButton`)
+        .html(buttonIcon)
+        .on("click", function() {
+            const isAdding = $(this).hasClass('btn-outline-secondary');
+            if (isAdding) {
+                quoteLineItems.push(cur_results[resultIndex]);
+                quoteLineItems[quoteLineItems.length - 1].isChanged = true;
+                $(this).html(getTrashIcon());
+            } else {
+                quoteLineItems = quoteLineItems.filter(line => line.name !== cur_results[resultIndex].name);
+                $(this).html(getPlusIcon());
+            }
+            $(this).toggleClass('btn-outline-secondary btn-outline-danger');
+        });
+}
+
+function updateCategoryArrays(item) {
+    const categories = [
+        { array: make_types, value: item.davinci_make_newap },
+        { array: cat1_types, value: item.davinci_category1_newap },
+        { array: cat2_types, value: item.davinci_category2_newap },
+        { array: cat3_types, value: item.davinci_category3_newap }
+    ];
+
+    categories.forEach(category => {
+        if (!category.array.includes(category.value) && category.value !== null) {
+            category.array.push(category.value);
+        }
+    });
+}
+
+function getTrashIcon() {
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">' +
+           '<path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>' +
+           '<path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>' +
+           '</svg>';
+}
+
+function getPlusIcon() {
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">' +
+           '<path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>' +
+           '</svg>';
+}
+
+/**
+ * Populates dropdown menus with unique category options from the product catalogue.
+ * This function updates the dropdown menus for Category 1, Category 2, Category 3, and Make.
+ * It preserves the first option (usually a default option) and the currently selected option in each dropdown.
+ * The options are sorted alphabetically before being added to the dropdowns.
+ * 
+ * @function
+ * @name populateDropdowns
+ * @description Populates category dropdowns with sorted, unique options from the product catalogue.
+ * 
+ * @requires jQuery - This function uses jQuery for DOM manipulation.
+ * @requires cat1_types - Global array containing unique Category 1 options.
+ * @requires cat2_types - Global array containing unique Category 2 options.
+ * @requires cat3_types - Global array containing unique Category 3 options.
+ * @requires make_types - Global array containing unique Make options.
+ * 
+ * @returns {void} This function does not return a value.
+ */
 function populateDropdowns(){
-    
     const categories = [
         {types: cat1_types, dropdown: $('#Cat1')},
         {types: cat2_types, dropdown: $('#Cat2')},
@@ -266,42 +266,55 @@ function populateDropdowns(){
     });
 }
 
+
+
 //Scrolls back to top of page	
 function scrollToTop(){
     $(window).scrollTop(0);
 }
 
-// Filters catalogue based on categories selected and search bar contents
-function filter(){
-    var new_filters = [$('#Make').val(), $('#Cat1').val(), $('#Cat2').val(), $('#Cat3').val(), $('#SearchBar').val()];
-    var filtered = [];
-    
-    //clear table
-	const $tableBody = $("#ProductTable tbody");
-    $tableBody.empty();
-	
-	//table reset
-	if (new_filters.toString() === default_filters.toString()){  //resetting the table
-	  cataloguePopulatorArray(products);
-	}
-    
-    
-    for(var i = 0; i < products.length; i++){
-    
-        if(products[i].davinci_make_newap !== new_filters[0] && new_filters[0] !== "Make"){ continue; }
-        else if(products[i].davinci_category1_newap !== new_filters[1] && new_filters[1] !== "Cat1"){ continue; }
-        else if(products[i].davinci_category2_newap !== new_filters[2] && new_filters[2] !== "Cat2"){ continue; }
-        else if(products[i].davinci_category3_newap !== new_filters[3] && new_filters[3] !== "Cat3"){ continue; }
-        else if(!products[i].name.toLowerCase().includes(new_filters[4].toLowerCase()) && new_filters[4] !== prev_search) { continue; }
-        else{
-            filtered.push(products[i]);
-        }
-    }
-    
+/**
+ * Filters the product catalogue based on selected categories and search bar contents.
+ * This function updates the displayed products according to the current filter settings.
+ * 
+ * @function
+ * @name filter
+ * @description Applies filters to the product catalogue and updates the display.
+ * 
+ * @requires jQuery - This function uses jQuery for DOM manipulation.
+ * @requires products - Global array containing all products.
+ * @requires default_filters - Global array containing default filter values.
+ * @requires prev_search - Global variable storing the previous search term.
+ * @requires prev_filters - Global array storing the previous filter values.
+ * @requires cataloguePopulatorArray - Function to populate the catalogue with filtered results.
+ * 
+ * @returns {void} This function does not return a value, but updates the global state and DOM.
+ */
+function filter() {
+    const new_filters = [
+        $('#Make').val(),
+        $('#Cat1').val(),
+        $('#Cat2').val(),
+        $('#Cat3').val(),
+        $('#SearchBar').val().toLowerCase()
+    ];
+
+    const isDefaultFilter = new_filters.toString() === default_filters.toString();
+    const filtered = isDefaultFilter ? products : products.filter(product => {
+        return (new_filters[0] === "Make" || product.davinci_make_newap === new_filters[0]) &&
+               (new_filters[1] === "Cat1" || product.davinci_category1_newap === new_filters[1]) &&
+               (new_filters[2] === "Cat2" || product.davinci_category2_newap === new_filters[2]) &&
+               (new_filters[3] === "Cat3" || product.davinci_category3_newap === new_filters[3]) &&
+               (new_filters[4] === prev_search || product.name.toLowerCase().includes(new_filters[4]));
+    });
+
+    $("#ProductTable tbody").empty();
     cataloguePopulatorArray(filtered);
     prev_filters = new_filters;
-    return;
+    prev_search = new_filters[4];
 }
+
+
 
 
 //

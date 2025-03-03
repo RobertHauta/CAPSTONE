@@ -1,0 +1,224 @@
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+}
+
+/* Swal Stuff */
+.swal-small {
+    width: 200px;
+    height: 100px;
+    padding: 10px;
+    font-size: 10px;
+}
+
+/* Loading Screen */
+
+.center{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.loader {
+    display: none;
+    border: 16px solid #f1f1f1;
+    border-top: 16px solid #454545;
+    border-radius: 50%;
+    width: 200px;
+    height: 200px;
+    animation: spin 2s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.LoadPage{
+    opacity: 0.3;
+    overflow: hidden;
+}
+
+.LoadingCursor{
+    cursor: wait;
+}
+
+/* Line Item Form */
+
+.LineItemForm{
+    display: none;
+    z-index: 1;
+    background-color: #ebebed;
+    padding: 1.5rem;
+    border-radius: 0.375rem;
+}
+.FormLine{
+    display: flex;
+}
+.FormLine input, .FormLine select{
+    min-width: 188px;
+    display: block;
+}
+
+/* Page Tops */
+
+#QuoteValuesFlex{
+    display: flex;
+    justify-content: center;
+}
+
+.list-group-item{
+    font-size: 1.1rem;
+}
+
+.EpicLogo{
+    display: inline-block;
+    width: 150px;
+    height: 75px;
+}
+
+.StickyFooter{
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+/* Input Fields */
+
+#SearchBar {
+    field-sizing: fixed;
+    width: 100%;
+}
+
+/* Removes arrows from number input fields */
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+input[type="number"]::-ms-clear {
+    display: none;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input{
+    field-sizing: content;
+}
+
+.form-control{
+    display: inline-block;
+    width: auto;
+}
+
+#QuoteValuesFlex .input-group{
+    width: 100%;
+}
+.input-group{
+    width: fit-content;
+}
+
+.input-group-text{
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group > .form-control{
+    flex: 0 0 auto;
+    width: auto;
+}
+
+.Filter {
+    border: none;
+    position: sticky;
+    top: 0;
+    background: #3d3935;
+    text-align: left;
+    font-weight: bold;
+    color: white;
+    cursor:pointer;
+}
+
+select{
+    background-color: #f0f0f0;
+    font-size: 1em;
+}
+
+/* Buttons */
+
+.NavButton{
+    color: #e91d2d !important;
+}
+.NavButton:hover{
+    color: #3d3935 !important;
+    text-decoration: underline;
+}
+
+.IconButton{
+    height: 38px;
+    display: flex;
+    align-items: center;
+}
+
+/* Tables */
+
+#TemplateTable > tbody > tr:nth-child(4n + 1) > td{
+    background-color: #0000000d !important;
+}
+
+#TemplateTable table{
+    margin-bottom: 0;
+}
+
+th{
+    background-color: #3d3935 !important;
+}
+
+.StickyHeader{
+    position: sticky;
+    top: 172px;
+    z-index: 1020;
+}
+
+td:last-child{
+    width: 50px;
+    height: 55px;
+}
+
+th:last-child{
+    width: 50px;
+}
+
+.Scrollable{
+    overflow-y: scroll;
+}
+
+/* Other */
+
+.TakeoffSideElement{
+    width: 16%;
+    margin-top: 2.5rem;
+}
+
+.TemplateDropdown:hover{
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.show{
+    display:block;
+}
+
+svg {
+  pointer-events: none;
+}

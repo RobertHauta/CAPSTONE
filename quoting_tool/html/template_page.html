@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../../lib/bootstrap.css">
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="../../lib/JQuery/jquery_v3_7_1.js"></script>
+    <script src="../../lib/sweetalert2.js"></script>
+</head>
+<body>
+    <div class="sticky-top">
+         <nav class="py-2 bg-body-tertiary border-bottom">
+            <div class="container flex-wrap">
+              <ul class="nav">
+                <li class="nav-item"><a href="#" id="ProductButton" class="NavButton nav-link link-body-emphasis px-2">Products</a></li>
+                <li class="nav-item"><a href="#" id="TemplateButton" class="nav-link link-body-emphasis px-2" aria-current="page">Templates</a></li>
+                <li class="nav-item"><a href="#" id="QuoteButton" class="NavButton nav-link link-body-emphasis px-2">Quote</a></li>
+                <li class="nav-item me-auto"><a href="#" id="TakeoffButton" class="NavButton nav-link link-body-emphasis px-2">Takeoff</a></li>
+                <li class="nav-item"><a href="#" id="ExitButton" class="NavButton nav-link link-body-emphasis px-2">Exit</a></li>
+              </ul>
+            </div>
+          </nav>
+          <header class="py-3 mb-2 border-bottom bg-body">
+            <div class="container d-flex flex-wrap justify-content-center">
+              <div class="d-flex align-items-center mb-3 mb-lg-0 me-lg-auto">
+                <img class="EpicLogo me-2 mt-2" src="https://cdn.prod.website-files.com/60be4c4cf9fd9f61795a5135/60be8f6a4225b441148eeba5_Epic_Logo.svg" alt="Epic Logo">
+                <span class="fs-2">Quote Templates</span>
+              </div>
+              
+              <div class="d-flex align-items-center col-12 col-lg-auto mb-3 mb-lg-0">
+                <button id="TopButton" class="IconButton btn btn-outline-danger me-2" type="button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-chevron-bar-up" viewBox="0 0 16 16">
+                      <path fill-rule="evenodd" d="M3.646 11.854a.5.5 0 0 0 .708 0L8 8.207l3.646 3.647a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 0 0 0 .708M2.4 5.2c0 .22.18.4.4.4h10.4a.4.4 0 0 0 0-.8H2.8a.4.4 0 0 0-.4.4"/>
+                    </svg>
+                </button>
+                
+                <input type="search" id="SearchBar" class="form-control me-2" placeholder="Search..." aria-label="Search">
+                <button id="SearchButton" class="IconButton btn btn-outline-danger" type="button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                    </svg>
+                </button>
+              </div>
+            </div>
+          </header>
+      </div>
+    
+    <table id="TemplateTable" class="table table-bordered table-hover">
+     <thead class="table-dark StickyHeader">
+       <tr>
+         <th>Template</th>
+         <th></th>
+       </tr>
+     </thead>
+     <tbody>
+     </tbody>
+    </table>
+    
+
+   <script src="../js/template_manager.js" charset="utf-8"></script>
+</body>
+</html>
