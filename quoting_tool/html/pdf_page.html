@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../../lib/bootstrap.css">
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="../../lib/sweetalert2.js"></script>
+    <script src="../../lib/JQuery/jquery_v3_7_1.js"></script>
+    <script src="../../lib/jspdf.js"></script>
+    <script src="../../lib/html2canvas.min.js"></script>
+    
+</head>
+<body>
+    <div class="PageDiv">
+        <div class="sticky-top">
+            <nav class="py-2 bg-body-tertiary border-bottom">
+                <div class="container flex-wrap">
+                    <ul class="nav">
+                        <li class="nav-item me-auto"><a href="#" id="SaveButton" class="NavButton nav-link link-body-emphasis px-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-floppy" viewBox="0 0 16 16">
+                                <path d="M11 2H9v3h2z"/>
+                                <path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0M1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5m3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4zM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5z"/>
+                            </svg> Save
+                        </a></li>
+                        <li class="nav-item"><a href="#" id="HelpButton" class="NavButton nav-link link-body-emphasis px-2">Help</a></li>
+                        <li class="nav-item"><a href="#" id="ExitButton" class="NavButton nav-link link-body-emphasis px-2">Exit</a></li>
+                      </ul>
+                </div>
+            </nav>
+        </div>
+        
+        <div id="pdf-container" class="container">
+            <div id="title-page" class="pdf-section pb-4">
+                <div id="title-logo" class="py-3 ps-5">
+                    <img id="pdf-logo" src="../../lib/images/EREC_logo.png" alt="Epic Logo">
+                </div>
+                
+                <div id="title-picture" class="pictures-flex my-4">
+                    <input type="file" class="form-control image-input" aria-label="Upload">
+                    <button class="btn btn-danger IconButton remove-picture pdf-button mt-2 me-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+                            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div id="title-info" class="ps-5">
+                    <h2 contenteditable="true" class="mb-3" id="quote-name">QUOTE NAME</h2>
+                    <div class="inline">
+                        <input id="title-date" type="date">
+                        <p class="vr-div"> | </p>
+                        <p id="title-project" contenteditable="true">Project #</p>
+                    </div>
+                    
+                    <hr class="divider">
+                    
+                    <h2 contenteditable="true">Address</h2>
+                    <p contenteditable="true">City, Province</p>
+                    <p contenteditable="true">Postal Code</p>
+                    
+                    <hr class="divider">
+                    
+                    <p id="Email" contenteditable="true"></p>
+                    <p id="Phone" contenteditable="true"></p>
+                    <p></p>
+                </div>
+            </div>
+            <hr>
+            <div id="executive-summary" class="pdf-section">
+                <h1 class="section-title">EXECUTIVE SUMMARY</h1>
+                <br>
+                <div class="btn-toolbar pdf-button mb-2" role="toolbar">
+                    <div class="btn-group me-2" role="group" aria-label="Text group">
+                        <button id="bold-button" class="btn btn-outline-secondary IconButton">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-type-bold" viewBox="0 0 16 16">
+                              <path d="M8.21 13c2.106 0 3.412-1.087 3.412-2.823 0-1.306-.984-2.283-2.324-2.386v-.055a2.176 2.176 0 0 0 1.852-2.14c0-1.51-1.162-2.46-3.014-2.46H3.843V13zM5.908 4.674h1.696c.963 0 1.517.451 1.517 1.244 0 .834-.629 1.32-1.73 1.32H5.908V4.673zm0 6.788V8.598h1.73c1.217 0 1.88.492 1.88 1.415 0 .943-.643 1.449-1.832 1.449H5.907z"/>
+                            </svg>
+                        </button>
+                        <button id="ital-button" class="btn btn-outline-secondary IconButton">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-type-italic" viewBox="0 0 16 16">
+                              <path d="M7.991 11.674 9.53 4.455c.123-.595.246-.71 1.347-.807l.11-.52H7.211l-.11.52c1.06.096 1.128.212 1.005.807L6.57 11.674c-.123.595-.246.71-1.346.806l-.11.52h3.774l.11-.52c-1.06-.095-1.129-.211-1.006-.806z"/>
+                            </svg>
+                        </button>
+                        <button id="underline-button" class="btn btn-outline-secondary IconButton">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-type-underline" viewBox="0 0 16 16">
+                              <path d="M5.313 3.136h-1.23V9.54c0 2.105 1.47 3.623 3.917 3.623s3.917-1.518 3.917-3.623V3.136h-1.23v6.323c0 1.49-.978 2.57-2.687 2.57s-2.687-1.08-2.687-2.57zM12.5 15h-9v-1h9z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="btn-group me-2" role="group" aria-label="List group">
+                        <button id="unordered-button" class="btn btn-outline-secondary IconButton">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-list-ul" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+                            </svg>
+                        </button>
+                        <button id="ordered-button" class="btn btn-outline-secondary IconButton">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-list-ol" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5"/>
+                              <path d="M1.713 11.865v-.474H2c.217 0 .363-.137.363-.317 0-.185-.158-.31-.361-.31-.223 0-.367.152-.373.31h-.59c.016-.467.373-.787.986-.787.588-.002.954.291.957.703a.595.595 0 0 1-.492.594v.033a.615.615 0 0 1 .569.631c.003.533-.502.8-1.051.8-.656 0-1-.37-1.008-.794h.582c.008.178.186.306.422.309.254 0 .424-.145.422-.35-.002-.195-.155-.348-.414-.348h-.3zm-.004-4.699h-.604v-.035c0-.408.295-.844.958-.844.583 0 .96.326.96.756 0 .389-.257.617-.476.848l-.537.572v.03h1.054V9H1.143v-.395l.957-.99c.138-.142.293-.304.293-.508 0-.18-.147-.32-.342-.32a.33.33 0 0 0-.342.338zM2.564 5h-.635V2.924h-.031l-.598.42v-.567l.629-.443h.635z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <select id="font-size" class="form-select me-2">
+                        <option value="1">8</option>
+                        <option value="2">10</option>
+                        <option value="3" selected>12</option>
+                        <option value="4">14</option>
+                        <option value="5">18</option>
+                        <option value="6">24</option>
+                        <option value="7">36</option>
+                    </select>
+                    
+                    <div class="btn-group mr-2" role="group" aria-label="Align group">
+                        <button id="align-left" class="btn btn-outline-secondary IconButton">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-text-left" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M2 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5m0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5m0-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5m0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5"/>
+                            </svg>
+                        </button>
+                        <button id="align-middle" class="btn btn-outline-secondary IconButton">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-text-center" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M4 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5m-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5m2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5m-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5"/>
+                            </svg>
+                        </button>
+                        <button id="align-right" class="btn btn-outline-secondary IconButton">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-text-right" viewBox="0 0 16 16">
+                              <path fill-rule="evenodd" d="M6 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5m-4-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5m4-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5m-4-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                </div>
+                <p id="pdf-summary" contenteditable="true"></p>
+            </div>
+            <hr>
+            <div id="pictures-page" class="pdf-section">
+                <div class="d-flex align-items-center">
+                    <h1 class="section-title me-3">PICTURES</h1>
+                    <button id="add-picture" class="btn btn-outline-secondary pdf-button IconButton">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                          <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+                        </svg>
+                    </button>
+                </div>
+                <br>
+                <div class="pictures-grid">
+                <!--
+                    <div>
+                        <div class="pictures-flex square">
+                            <input type="file" class="form-control image-input" aria-label="Upload">
+                            <button class="btn btn-danger IconButton remove-picture mt-2 me-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+                                  <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <label contenteditable="true">Label</label>
+                    </div>
+                    -->
+                </div>
+            </div>
+            <hr>
+            <div id="quote-page" class="pdf-section">
+                <div class="d-flex align-items-center">
+                    <h1 class="section-title me-3">QUOTE DETAILS</h1>
+                    <button id="add-details" class="btn btn-outline-secondary pdf-button IconButton">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                          <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
+                        </svg>
+                    </button>
+                </div>
+                <br>
+                <table id="details-table" class="table table-bordered table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Description</th>
+                            <th>Unit Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+                
+                <ul id="pdf-quote-total" class="list-group list-group-flush">
+                    <li class="list-group-item d-flex"><strong>Quote Subtotal: </strong><div id="pdf-subtotal" class="ms-2">x</div></li>
+                    <li class="list-group-item d-flex"><strong>GST (5.0%): </strong><div id="pdf-gst" class="ms-2">x</div></li>
+                    <li class="list-group-item d-flex"><strong>Total: </strong><div id="pdf-total" class="ms-2">x</div></li>
+                </ul>
+            </div>
+            <hr>
+            <div id="authorization-page" class="pdf-section">
+                <h1 class="section-title">AUTHORIZATION</h1>
+                <br>
+                <div id="auth-values">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex"><strong>Quote Details: </strong><div id="auth-details" class="ms-auto">x*</div></li>
+                    </ul>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex"><strong>Project: </strong><p contenteditable="true" id="auth-project" class="ms-2">Project #</p></li>
+                        <li class="list-group-item d-flex"><strong>Name: </strong><p contenteditable="true" id="auth-name" class="ms-2">Customer Name</p></li>
+                        <li class="list-group-item d-flex"><strong>Address: </strong><p contenteditable="true" id="auth-address" class="ms-2">Customer Address</p></li>
+                    </ul>
+                </div>
+                <p>*Includes Taxes</p>
+                <hr class="divider">
+                <h2>Customer Comments / Notes</h2>
+                <textarea id="customer-notes" name="notes" rows="10" cols="75"></textarea>
+                <hr class="divider">
+                <div id="customer-sign" class="mt-5">
+                    <h5 for="name" class="me-5 auth-label" id="customer-name"><strong contenteditable="true">Customer Name:</strong></h5>
+                    <h5 for="date" class="auth-label" id="bottom-date"><strong>Date:</strong></h5>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="details-popup" class="container-card center">
+        <div class="d-flex align-items-center">
+            <h2 class="me-auto">Select Quote Details</h2>
+            <button id="cancel-details" class="btn btn-danger IconButton remove-picture me-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"></path>
+                </svg>
+            </button>
+        </div>
+        <br>
+        <div class="Scrollable">
+            <table id="items-table" class="table table-bordered table-striped table-hover">
+                <thead class="table-dark StickyHeader" style="top: 0;">
+                    <tr>
+                        <th><div class="d-flex justify-content-center mb-1"><input type="checkbox" id="checkbox-all"></div></th>
+                        <th>Description</th>
+                        <th>Unit Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script src="../js/universal_Functions.js"></script>
+    <script src="../js/externalfile_manager/pdf_Generator.js"></script>
+</body>
+</html>
