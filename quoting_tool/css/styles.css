@@ -12,12 +12,18 @@ body {
     font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
 }
 
-
+/* Swal Stuff */
+.swal-small {
+    width: 200px;
+    height: 100px;
+    padding: 10px;
+    font-size: 10px;
+}
 
 /* Loading Screen */
 
 .center{
-    position: absolute;
+    position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -48,7 +54,7 @@ body {
 
 /* Line Item Form */
 
-.LineItemForm{
+.container-card{
     display: none;
     z-index: 1;
     background-color: #ebebed;
@@ -74,20 +80,132 @@ body {
     font-size: 1.1rem;
 }
 
-#GST, #FinalPrice{
-    font-size: 1.5rem;
-}
-
 .EpicLogo{
     display: inline-block;
     width: 150px;
-    height: 75px;
+    height: 85px;
 }
 
 .StickyFooter{
     position: fixed;
     bottom: 0;
     width: 100%;
+}
+
+/* PDF Stuff */
+
+#pdf-container{
+    padding: 0;
+}
+
+.pdf-section:not(#title-page){
+    padding: 10rem 5rem;
+}
+
+.section-title{
+    color: #e91d2d;
+    font-weight: bold;
+}
+
+.divider{
+    color: #358bb5;
+    border-top-width: 5px;
+    opacity: 1;
+    margin: 1.5rem 0;
+}
+
+.vr-div{
+    font-size: 25px;
+    font-weight: bold;
+    /*color: #358bb5;*/
+}
+
+#title-page{
+    display: flex;
+    flex-direction: column;
+    /*height: 100vh;*/
+}
+
+#pdf-logo{
+    width: 25%;
+}
+
+#title-picture{
+    height: 60vh;
+}
+
+#title-info{
+    width: fit-content;
+}
+
+#pdf-summary{
+    padding: 5px 10px 100px 10px;
+    border: 1px solid black;
+    border-radius: 0.375rem;
+}
+
+#font-size{
+    width: fit-content;
+    border-color: #3d3935;
+}
+
+#font-size option:hover{
+    background-color: #e91d2d;
+}
+
+.pictures-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5em;
+}
+
+.pictures-flex{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid black;
+    position: relative;
+}
+
+.pictures-flex > .remove-picture{
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 11;
+}
+
+.square{
+    aspect-ratio: 1/1;
+}
+
+#details-popup{
+    width: 75%;
+    max-height: 75%;
+}
+
+#pdf-quote-total{
+    display: flex;
+    align-items: flex-end;
+}
+
+#auth-values{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+#customer-notes{
+    margin-bottom: 40%;
+}
+
+#customer-sign{
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20%;
+}
+
+.auth-label{
+    border-bottom: 2px solid black;
+    padding-right: 30%;
 }
 
 /* Input Fields */
@@ -110,20 +228,24 @@ input[type="number"]::-webkit-inner-spin-button {
     margin: 0;
 }
 
+input[type="checkbox"]{
+    accent-color: #358bb5;
+}
+
 input{
     field-sizing: content;
 }
+
 .form-control{
     display: inline-block;
     width: auto;
 }
-tr:nth-child(odd) input {
-    background: #f2f2f2;
-    border-width: 1px;
-}
 
+#QuoteValuesFlex .input-group{
+    width: 100%;
+}
 .input-group{
-    width: auto;
+    width: fit-content;
 }
 
 .input-group-text{
@@ -134,6 +256,14 @@ tr:nth-child(odd) input {
 .input-group > .form-control{
     flex: 0 0 auto;
     width: auto;
+}
+
+.group-name{
+    border: none;
+    background-color: transparent;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
 }
 
 .Filter {
@@ -168,43 +298,26 @@ select{
     align-items: center;
 }
 
-/* Tables 
-table {
-    display: grid;
-    border-collapse: collapse;
-    min-width: 100%;
-  
+.group-button{
+    height: 26px;
+    display: flex;
+    align-items: center;
 }
-thead,
-tbody,
-tr {
-    display: contents;
-}
-th,
-td {
-    padding: 15px;
-    overflow: hidden;
-    white-space: nowrap;
-    border-right: solid black 1px !important;
-}
-th {
-    position: sticky;
-    top: 0;
-    background: #454545;
-    text-align: left;
-    font-weight: normal;
-    font-size: 1.1rem;
-    color: white;
-}
-td {
-    padding-top: 10px;
-    padding-bottom: 10px;
-    text-overflow: ellipsis;
-    color: #424242;
-} */
 
-th{
-    background-color: #3d3935 !important;
+
+/* Tables */
+
+table > tbody .group-cell{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #3d3935;
+    height: 35px;
+    border-width: 1px;
+    border-color: #4d5154;
+    color: white;
+    font-weight: bold;
+    cursor: move;
 }
 
 .StickyHeader{
@@ -213,9 +326,20 @@ th{
     z-index: 1020;
 }
 
-td:last-child, th:last-child{
-    width: 105px;
-    text-overflow: clip;
+table:not(#TotalMaterial, #details-table, #items-table, .saving-table) th:last-child{
+    width: 50px;
+}
+
+#QuoteTable th:nth-child(4){
+    min-width: 116px;
+}
+
+#items-table th:first-child{
+    width: 40px;
+}
+
+thead > tr{
+    border-top: 0;
 }
 
 .Scrollable{
@@ -224,6 +348,11 @@ td:last-child, th:last-child{
 
 /* Other */
 
+.TakeoffSideElement{
+    width: 20%;
+    margin-top: 2.5rem;
+}
+
 .TemplateDropdown:hover{
     text-decoration: underline;
     cursor: pointer;
@@ -231,6 +360,10 @@ td:last-child, th:last-child{
 
 .show{
     display:block;
+}
+
+.inline > *{
+    display: inline;
 }
 
 svg {
